@@ -2,6 +2,9 @@
 //OLED displey https://s.click.aliexpress.com/e/_APw28Y
 #include "LedControl.h"
 #include <EEPROM.h>
+#include <U8g2lib.h>
+#include <Wire.h>
+U8G2_SH1106_128X32_VISIONOX_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE); 
 LedControl lc = LedControl(11, 12, 10, 4);
 /*Structure 
 SETUP FAZE -------------------
@@ -49,6 +52,8 @@ int Array[16][16] = {{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                     {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                     {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
+int EnemysG[101] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int EnemyDouble[51] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int bulletPosition[2] = {0,0};
 int enBulletPosition1[4] = {0,0,0,0};
 int enBulletPosition2[4] = {0,0,0,0};
@@ -75,7 +80,10 @@ const PROGMEM byte block[4][4] = {
 const PROGMEM byte lod[2][3] = {
   {0,1,0},
   {1,1,1}};
-  
+const PROGMEM byte ship[3][2] = {
+  {1,0},
+  {1,1},
+  {1,0}};
 const PROGMEM byte vybuch1[3][3] = {
   {1,1},
   {1,1}};  
@@ -110,6 +118,23 @@ const PROGMEM byte GameOverMessage[16][16] = {
   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
+const PROGMEM byte InfoText[16][16] = {
+  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+  {0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0},
+  {0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0},
+  {0,1,1,0,1,1,1,0,1,1,1,0,1,1,0,0},
+  {0,1,1,0,1,0,1,0,1,0,0,1,0,0,1,0},
+  {0,1,1,0,1,0,1,0,1,1,0,1,0,0,1,0},
+  {0,1,1,0,1,0,1,0,1,0,0,1,0,0,1,0},
+  {0,1,1,0,1,0,1,0,1,0,0,0,1,1,0,0},
+  {0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0},
+  {0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0},
+  {0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0},
+  {0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0},
+  {0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0},
+  {0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0},
+  {0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0}};
 const PROGMEM byte Win[16][16] = {
   {0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0},
   {0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0},
@@ -149,41 +174,26 @@ const PROGMEM byte SnakeMenu[4][4] = {
   {1,1,0,0},
   {0,0,1,1},
   {1,1,1,1}};
-const PROGMEM byte Nothing[4][4] = {
+const PROGMEM byte Nastaveni[4][4] = {
   {1,0,0,1},
   {1,1,0,1},
   {1,0,1,1},
   {1,0,0,1}};
-  /*
-const PROGMEM byte PongMenu[8][8] = {
-  {0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0},
-  {0,0,0,1,1,1,0,0},
-  {0,0,0,1,0,1,0,0},
-  {0,0,0,1,1,1,0,0},
-  {0,0,0,1,0,0,0,0},
-  {0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0}};
-const PROGMEM byte TetrisMenu[8][8] = {
-  {0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0},
-  {0,0,1,1,1,0,0,0},
-  {0,0,0,1,0,0,0,0},
-  {0,0,0,1,0,0,0,0},
-  {0,0,0,1,0,0,0,0},
-  {0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0}};
-  */
-const PROGMEM byte Dekujeme[4][4] = {
-  {1,1,1,0},
-  {1,0,0,1},
-  {1,0,0,1},
-  {1,1,1,0}};
+const PROGMEM byte Info[4][4] = {
+  {0,1,1,0},
+  {0,0,0,0},
+  {0,1,1,0},
+  {0,1,1,0}};
 const PROGMEM byte SpaceInvatorsMenu[4][4] = {
   {1,1,1,1},
   {0,1,1,0},
   {0,1,1,0},
   {1,1,1,1}};
+const PROGMEM byte Galaxian[4][4] = {
+  {0,1,1,0},
+  {1,0,0,0},
+  {1,0,1,1},
+  {0,1,1,0}};
 const PROGMEM byte MenuMenu[16][16] = {
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
@@ -321,42 +331,20 @@ const PROGMEM byte Silver_medal[8][8] = {
   {0,0,1,1,1,1,0,0},
   {0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0}};
-const PROGMEM byte Sound_icon[8][8] = {
-  {0,0,0,0,0,0,0,0},
-  {0,0,0,0,1,0,0,0},
-  {0,1,1,1,1,0,0,0},
-  {0,1,1,1,1,0,1,0},
-  {0,1,1,1,1,0,1,0},
-  {0,1,1,1,1,0,0,0},
-  {0,0,0,0,1,0,0,0},
-  {0,0,0,0,0,0,0,0}};
-const PROGMEM byte Sound_on[8][8] = {
-  {0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0},
-  {0,0,1,1,1,1,0,0},
-  {0,0,1,1,1,1,0,0},
-  {0,0,1,1,1,1,0,0},
-  {0,1,1,1,1,1,1,0},
-  {0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0}};
-const PROGMEM byte Sound_off[8][8] = {
-  {0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0},
-  {0,0,1,1,1,1,0,0},
-  {0,1,1,1,1,1,1,0},
-  {0,0,0,0,0,0,0,0},
-  {0,0,0,0,0,0,0,0}};
-const PROGMEM byte Dekujeme_vam_za_4_spolecne_roky_uceni[8][242] = {
-  {0,0,0,0,1,1,1,1,1,1,0,0,0,0,1,1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,},
-  {0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,},
-  {0,0,0,0,1,0,0,0,0,0,0,1,0,0,1,1,1,1,0,0,1,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,1,1,1,1,0,0,1,0,1,0,1,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,1,1,1,0,0,1,0,1,0,1,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,1,0,0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,1,0,1,1,1,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,0,1,1,1,0,0,0,1,1,1,1,0,0,1,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,},
-  {0,0,0,0,1,0,0,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,1,0,0,0,0,1,0,1,1,0,1,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,1,0,1,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,1,1,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,1,1,0,0,0,1,0,1,0,0,0,0,1,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,},
-  {0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,1,1,0,1,1,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,1,1,1,0,0,0,0,0,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,1,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,1,1,1,1,1,1,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,1,1,1,1,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,1,1,1,0,0,0,0,1,0,0,0,0,1,0,0,0,},
-  {0,0,0,0,1,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,1,0,0,0,0,1,0,1,0,0,1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,1,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,},
-  {0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,1,0,1,0,0,0,1,0,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,1,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,1,0,0,0,1,1,0,1,0,0,1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1,1,1,1,1,0,0,1,0,0,0,0,1,0,1,0,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,1,0,0,0,1,0,0,0,0,1,1,1,1,0,1,1,},
-  {0,0,0,0,1,1,1,1,1,1,0,0,0,0,1,1,1,1,0,0,1,0,0,0,0,1,0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,1,0,0,1,0,1,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,0,1,0,1,0,0,1,0,1,0,0,0,0,0,0,1,1,1,1,1,1,0,0,1,1,1,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,1,0,0,0,0,0,0,0,1,1,1,1,0,0,0,1,0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,1,0,0,0,0,1,0,0,1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,1,1,}};
+const PROGMEM byte Sound_on[6][6] = {
+  {0,0,0,1,0,0},
+  {1,1,1,1,0,0},
+  {1,1,1,1,0,1},
+  {1,1,1,1,0,1},
+  {1,1,1,1,0,0},
+  {0,0,0,1,0,0}};
+const PROGMEM byte Sound_off[6][6] = {
+  {0,0,0,1,0,0},
+  {1,1,1,1,0,0},
+  {1,1,1,1,0,0},
+  {1,1,1,1,0,0},
+  {1,1,1,1,0,0},
+  {0,0,0,1,0,0}};
 /****************************************************************/
 //Numbers
 /****************************************************************/
@@ -447,29 +435,37 @@ const PROGMEM byte Zerox4[7][4] = {
 /****************************************************************/
 
 //Food position variables
+String versionUrxOS = "0.4.0";
 int foodX = 0;
 int foodY = 0;
 //Delay in game is overrided when function SettingGameSnake is called
-int delayTime = 300;
-//GameState for setting menu - 0, gameover - 1, game - Snake - 2, game - Space Invators = 3, dekujeme - 4, nothing - 5
+float delayTime = 300;
+//GameState for setting menu - 0, gameover - 1, game - Snake - 2, game - Space Invators = 3, info - 4, nothing - 5
 int gameState = 0;
 //Menu variable
 int whichIconShowed = 0;
 //Variables for managing to turning game at specific time 
 unsigned long allTime = 0;
 unsigned long lastTime = 0;
+unsigned long lastTime2 = 0;
 unsigned long soundTime = 0;
 unsigned long soundLastTime = 0;
+unsigned long lastDebounceTime = 0; 
+unsigned long interrupt_time = 0;
+int debounceDelay = 80;
 int soundDelay = 0;
 //Buttons variables
 const int forward = 7;//7,8
 const int right = 8;//8,6
 const int left = 6;//6,7
 const int down = 5;//5,5
-const int activate = 9;
+const int a = 9;
 const int soundPin = 4;
+const int b = 3;
+//Battery analog pin
+const int battery = A0;
 //Constant variables that are use when SettingGameSnake is called
-const int delayTimeConst = 300;
+const int delayTimeConst = 230;
 const int bodyLengthConst = 3;
 //Variable for storing 8 bites
 const int allLedTurnOn = 0b11111111;
@@ -479,11 +475,17 @@ const int addressSnake1 = 2;
 const int addressSnake2 = 3;
 const int addressSpace1 = 4;
 const int addressSpace2 = 6;
+const int addressGalaxian1 = 7;
+const int addressGalaxian2 = 8;
 //Movement variables
 volatile int x = 0;
 volatile int y = 0;
+volatile int active = 0;
+//volatile bool change = false;
 int pX = 7;
 int pY = 7;
+volatile int sX = 0;
+volatile int sY = 0;
 //Variable for length of snake
 int bodyLength = 3;
 int opravaPohybu = 0;
@@ -498,94 +500,70 @@ int moveEnemy1 = 0;
 int moveEnemy2 = 3;
 int moveEnemyT1 = 2;
 int moveEnemyT2 = 4;
+int wave = 0;
 int computer = 0;
 int points = 0;
+int prucho = 0;
+byte congrats = 0;
+bool congratsState = true;
 bool soundState = true;
 bool menuFirstWalkThrough = true;
 bool goThrough = true;
 bool startingLedOn = true;
 bool load = true;
+bool lastState = true;
 
 /****************************************************************/
 //Setup function
 /****************************************************************/
 void setup() {
   //Defining variables
+  u8g2.begin();
+  // Draw battery,voltage,version
+  DrawMenu();
+  //u8x8.refreshDisplay();    // only required for SSD1606/7  
+  Serial.begin(9600);
+  //Serial.print(EEPROM.read(addressSnake1));
+  // Defining all buttons
+  //EEPROM.write(addressSnake1,78);
   pinMode(forward, INPUT_PULLUP);
   pinMode(right, INPUT_PULLUP);
   pinMode(left, INPUT_PULLUP);
   pinMode(down, INPUT_PULLUP);
-  pinMode(activate, INPUT_PULLUP);
-  //Pin for piezzo buzzer
+  pinMode(a, INPUT_PULLUP);
+  pinMode(b, INPUT_PULLUP); 
+  // Defining interrupts for all the buttons because we know that arduino nano every has all pins with interupts.
+  attachInterrupt(digitalPinToInterrupt(forward), blink, FALLING);
+  attachInterrupt(digitalPinToInterrupt(right), blink, FALLING);
+  attachInterrupt(digitalPinToInterrupt(left), blink, FALLING);
+  attachInterrupt(digitalPinToInterrupt(down), blink, FALLING);
+  attachInterrupt(digitalPinToInterrupt(a), blink, FALLING);
+  attachInterrupt(digitalPinToInterrupt(b), blink, FALLING);
+  // Pin for piezzo buzzer
   pinMode(soundPin, OUTPUT);
-  //Erasing and inicializing all displays
+  pinMode(LED_BUILTIN,OUTPUT);
+  // Erasing and inicializing all displays
   for (int index = 0; index < 4; index++) {
     lc.shutdown(index, false);
     lc.setIntensity(index, 0);
     lc.clearDisplay(index);
   }
-  //Making random random
+  // Making random random
   randomSeed(analogRead(0));
+  // reading state of sound (on/off)
   soundState = EEPROM.read(addressSound);
   delay(100);
-  //SettingGameSpace();
 }
 /****************************************************************/
 //Input functions
 /****************************************************************/
-//Getting input from buttons
-int Buttons() {
-  if (digitalRead(forward)) {
-    //Serial.println("dopredu");
-    if (y != - 1) {
-      y = 1;
-      x = 0;
-      return 1;
-    }
-  } else if (digitalRead(down)) {
-    //Serial.println("dozadu");
-    if (y != 1) {
-      y = -1;
-      x = 0;
-      return 1;
-    }
-  } else if (digitalRead(left)) {
-    //Serial.println("doleva");
-    if (x != - 1) {
-      x = 1;
-      y = 0;
-      return 1;
-    }
-  } else if (digitalRead(right)) {
-    //Serial.println("doprava");
-    if (x != 1) {
-      x = -1;
-      y = 0;
-      return 1;
-    } 
-  } else {
-      return 0;
-    }
-}
-int HorizontalButtons() {
-  if (digitalRead(left)) {
-    x = 1;
-    return 1;
-  } else if (digitalRead(right)) {
-    x = -1;
-    return 1;
-  } else {
-    x = 0;
-    return 0;
-  }
-}
-int FireButtons() {
-  if (digitalRead(forward)) {
-    y = 1;
-    return 1;
-  } else {
-    y = 0;
-    return 0;
+void blink() { //Function for all buttons it is called with interupts so that means that is will go here every time you press button.
+  interrupt_time = millis();
+  if (interrupt_time-lastDebounceTime > debounceDelay) {
+    y=(!digitalRead(forward) * 1) | (!digitalRead(down) * -1);
+    x=(!digitalRead(left) * 1) | (!digitalRead(right) * -1);
+    active=(!digitalRead(a) * 1) | (!digitalRead(b) * -1);
+    lastDebounceTime = interrupt_time; 
   }
 }
 /****************************************************************/
@@ -596,10 +574,6 @@ int FireButtons() {
 void Menu(bool firstGoThrough, bool go) {
   //When menu start show M in start
   if (firstGoThrough==true) {
-    int remainder = 0;
-    int remainderL = 0;
-    //int noty[12] = {466,440,392,349,440,392,349,70,70,70,70,7}; // 440,466,349,294,233
-    //int noty[] = {349,466,147,440,147,185,0,0,0,0,0};
     int noty[] = {175,233,73.5,220,73.5,92.5};
     whichIconShowed = 0;
     //Clearing all displays
@@ -611,14 +585,12 @@ void Menu(bool firstGoThrough, bool go) {
         for (int col = 0; col < 16; col++) {
           int nazev[] = {pgm_read_byte(&(HolTyc1[row][col])),pgm_read_byte(&(HolTyc2[row][col])),pgm_read_byte(&(HolTyc3[row][col])),pgm_read_byte(&(HolTyc4[row][col])),pgm_read_byte(&(HolTyc4[row][col])),pgm_read_byte(&(HolTyc4[row][col]))};
           ShowText(row,col,nazev[i]);
-          if (row == 0 or row == 6 - remainder or row == 12 - remainder) {
-            //noTone(soundPin);
-          }
           PlaySound(6,i);
         } 
         delay(5);
       }
     }
+    DrawMenu();
     noTone(soundPin);
     ActiveButton();
     //When some button is pressed then show menu
@@ -626,7 +598,7 @@ void Menu(bool firstGoThrough, bool go) {
       lc.clearDisplay(index);
     }
     ShowOneDisplay(1,'s');
-    ShowOneDisplay(0,'d');
+    ShowOneDisplay(0,'g');
     ShowOneDisplay(2,'n');
     ShowOneDisplay(3,'i');
   } else  if (go==true){
@@ -640,18 +612,19 @@ void Menu(bool firstGoThrough, bool go) {
         ShowText(row,col,pgm_read_byte(&(MenuMenu[row][col])));
       }
     }
+    DrawMenu();
     ActiveButton();
     for (int index = 0; index < 4; index++) {
       lc.clearDisplay(index);
     }
     ShowOneDisplay(1,'s');
-    ShowOneDisplay(0,'d');
+    ShowOneDisplay(0,'g');
     ShowOneDisplay(2,'n');
     ShowOneDisplay(3,'i');
   }
-  int direction = IsButtonPressed();
   byte xNula = 1;
   byte yNula = 1;
+  IsButtonPressed();
   if (whichIconShowed!=0) {
     if (x==0) {
       xNula=0;
@@ -661,6 +634,17 @@ void Menu(bool firstGoThrough, bool go) {
       xNula = 1;
       yNula = 1;
     }
+    /*
+     * Solving menu
+     *  _____      
+     * |     |
+     * | 2,4 |
+     * | 1,3 |
+     * |_____|
+     * I now that apps next to each other have difference 2,
+     * and apps under each other have difference 1.
+     * So with little of math that is under I could solve this problem.
+     */
     if (whichIconShowed==1) {
       whichIconShowed += (abs(x) + 1) * xNula;
       whichIconShowed += (abs(y)) * yNula;
@@ -673,43 +657,38 @@ void Menu(bool firstGoThrough, bool go) {
     } else if (whichIconShowed==4) {
       whichIconShowed -= (abs(x) + 1) * xNula;
       whichIconShowed -= (abs(y)) * yNula;
-      
     }
   }
-  if (whichIconShowed==0 and direction!=5) {
+  if (whichIconShowed==0 and active==0) {
     whichIconShowed=2;
   }
-  //Serial.println(whichIconShowed);
-  //Cool animation for changing game in menu
-  if (whichIconShowed==2) {
-    //Showing menu text S - Snake
-    ShowBorders(1);
-    if (direction==5) {
+  ShowBorders(whichIconShowed-1);
+  if (active==1 and whichIconShowed!=0) {
+    active=0;
+    if (soundState==true) {
+      tone(soundPin,147);
+      delay(100);
+      noTone(soundPin);
+    }
+    if (whichIconShowed==2) {
+      //Showing menu text S - Snake
       SettingGameSnake();
       GenerateFood();
       gameState = 2;
-    }
-  } else if (whichIconShowed==1) {
-    //Showing menu text D - dekujeme
-    ShowBorders(0);
-    if (direction==5) {
-      gameState = 4;
-    }
-  } else if (whichIconShowed==3) {
-    //Showing menu text N - nastaveni
-    ShowBorders(2);
-    if (direction==5) {
+    } else if (whichIconShowed==1) {
+      //Showing menu text G - Galaxian
+      SettingGameGalaxian();
+      gameState = 6;
+    } else if (whichIconShowed==3) {
+      //Showing menu text N - nastaveni
       SettingSetting();
-    }
-  } else if (whichIconShowed==4) {
-    //Showing menu text I - Space Invators
-    ShowBorders(3);
-    if (direction==5) {
+    } else if (whichIconShowed==4) {
+      //Showing menu text I - Space Invators
       SettingGameSpace();
       gameState = 3;
     }
   }
-  delay(200);
+  delay(10);
 }
 
 //GameOver function
@@ -723,7 +702,7 @@ void GameOver(int score, int game) {
   for (int index = 0; index < 4; index++) {
     lc.clearDisplay(index);
   }
-  if (game==1 or game==2) {
+  if (game==1 or game==2 or game==4) {
     //Showing text Game over
     for (int row = 0; row < 16; row++) {
       for (int col = 0; col < 16; col++) {
@@ -753,6 +732,13 @@ void GameOver(int score, int game) {
     } else if (read2EEPROM(addressSpace2) < score) {
       write2EEPROM(addressSpace2,score);
     }
+  } else if (game == 4) {
+    if (EEPROM.read(addressGalaxian1) <= score) {
+      EEPROM.write(addressGalaxian2,EEPROM.read(addressGalaxian2));
+      EEPROM.write(addressGalaxian1,score);
+    } else if (EEPROM.read(addressGalaxian2) < score) {
+      EEPROM.write(addressGalaxian2,score);
+    }
   }
   ActiveButton();
   //Clearing all displays
@@ -781,68 +767,61 @@ void Snake() {
   //Local variables Snake
   allTime = millis();
   //Movement: left....x = 1, right....x = -1, forward....y = 1, down....y = -1. 
-  if (opravaPohybu == 0) {
-    opravaPohybu = Buttons();
-  }
-  //Smart blinking food led 
-  if (x==0 and y==0) {
-    lc.setLed(0,pX,pY,1);
+  if ((x==0 and y==0) and startingLedOn==true) {
+    ShowText(pY,pX,1);
+    //Serial.print()
   } else if (startingLedOn==true) {
-    lc.setLed(0,pX,pY,0);
+    ShowText(pY,pX,0);
     startingLedOn=false;
   }
-  if (activatorV == 1 and digitalRead(activate) == 1) {
-    activatorV = 0;
+  if (activatorV == 1 and (x!=0 or y!=0)) {
+    activatorV=0;
     lastTime = allTime;
-    delay(500);
-  } else if (activatorV == 0 and digitalRead(activate) == 1) {
+  }
+  if (active==-1) {
+    activatorV=1;
+    active=0;
+    sX=0;
+    sY=0;
+    x=0;
+    y=0;
+    GameOver(bodyLength-3,1);
+  }
+  if (activatorV == 0 and active == 1 and startingLedOn==false) {
     activatorV = 1;
+    y=0;
+    x=0;
     noTone(soundPin);
-    delay(1000);
+  }
+  if (((bodyLength-3) > EEPROM.read(addressSnake1) and congratsState==true) and congrats <= 3) {
+    PlaySound(9,congrats);
+    congratsState=false;
   }
   if (activatorV == 0) {
-    TurningLedArray(foodX,foodY,millis() % 1000 < 500 ? 1 : 0);
-    //This will run every delayTime
+    // Smart blinking food led 
+    ShowText(foodY,foodX,millis() % 1000 < 500 ? 1 : 0);
+    // This will run every delayTime
     if (allTime - lastTime >= delayTime) {
-      opravaPohybu = 0;
-      //Making head bigger
-      if (x == 1) {
-        pY += 1;
-        Warp();
-        //Collision for GameOver
-        if (Array[pY][pX] > 0) {
-          GameOver(bodyLength,1);
-        }
-        Array[pY][pX] = bodyLength + 1;
-      //Making head bigger
-      } else if (x == -1) {
-        pY -= 1;
-        Warp();
-        //Collision for GameOver
-        if (Array[pY][pX] > 0) {
-          GameOver(bodyLength,1);
-        }
-        Array[pY][pX] = bodyLength + 1;
-      //Making head bigger
-      } else if (y == -1) {
-        pX += 1;
-        Warp();
-        //Collision for GameOver
-        if (Array[pY][pX] > 0) {
-          GameOver(bodyLength,1);
-        }
-        Array[pY][pX] = bodyLength + 1;
-      //Making head bigger
-      } else if (y == 1) {
-        pX -= 1;
-        Warp();
-        //Collision for GameOver
-        if (Array[pY][pX] > 0) {
-          GameOver(bodyLength,1);
-        }
+      //sY=y;
+      //sX=x;
+      if (sY!=-y and y!=0) {
+        sY=y;
+        sX=0;
+      } else if (sX!=-x and x!=0) {
+        sX=x;
+        sY=0;
+      }
+      // Making head bigger
+      pY -= sY;
+      pX -= sX;
+      Warp();
+      if (Array[pY][pX] > 0) {
+        GameOver((bodyLength-3),1);
+      }
+      if (sX!=0 or sY!=0) {
         Array[pY][pX] = bodyLength + 1;
       }
-      //This will run only if game snake is on
+      //This will run only if game snake is on - if you are not dead
       if (gameState==2) {
         //Big for loop that run for all pixel in array
         for (int row = 0; row < 16; row++) {
@@ -852,27 +831,37 @@ void Snake() {
               Array[row][col]--;
               //If This pixel is zero (I know that zero means that it is snake ending) turn pixel off
               if (Array[row][col]==0) {
-                TurningLedArray(row,col,0);
+                ShowText(row,col,0);
               //If pixel is the biggest turn pixel on
               } else if (Array[row][col]==bodyLength) {
-                TurningLedArray(row,col,1);
+                ShowText(row,col,1);
               }
             }
           }
-          if (soundDelay == 0 and (x>=1 or x <0 or y >=1 or y<0)) {
+        }
+        if (soundDelay == 0 and (sX !=0 or sY !=0)) {
             PlaySound(1,0);
           }
-        }
-        //If snake ated the food
-        if (Array[pY][pX] == Array[foodX][foodY] && Array[pY][pX]!=0) {
+        //If snake eated the food
+        if (Array[pY][pX] == Array[foodY][foodX] && Array[pY][pX]!=0) {
   //        Serial.println("snez");
           noTone(soundPin);
           PlaySound(2,0);
           bodyLength += 1;
-          delayTime -= 1;
+          delayTime -= 0.5;
           foodX=-1;
           foodY=-1;
           GenerateFood();
+          u8g2.firstPage();
+          do {
+            String out1 = "Your Score: " + String(bodyLength-3);
+            String out2 = "High Score: " + String(EEPROM.read(addressSnake1));
+            u8g2.setFont(u8g2_font_helvR12_tr);
+            u8g2.setCursor(0, 13);
+            u8g2.print(out1);
+            u8g2.setCursor(0,28);
+            u8g2.print(out2);
+          } while ( u8g2.nextPage() );
         }
         //Resetting timer
         lastTime = allTime;
@@ -882,9 +871,7 @@ void Snake() {
 }
 void SpaceInvators() {
   allTime = millis();
-  FireButtons();
-  HorizontalButtons();
-  if (y==1 and bulletTimer==0 and activatorV == 2) {
+  if (active==1 and bulletTimer==0 and activatorV == 2) {
     for (int col = 0; col < 16; col++) {
       if (Array[15][col] == 1) {
         bulletTimer = 14;
@@ -892,6 +879,7 @@ void SpaceInvators() {
         bulletPosition[1] = 13;
       }
     }
+    active=0;
     PlaySound(4,0);
   } else if (bulletTimer>0) {
     bulletTimer -= 1;
@@ -1009,21 +997,31 @@ void SpaceInvators() {
       enBulletTimer2 = 0;
     }
   }
-  if (activatorV == 2 and digitalRead(activate) == 1) {
-    activatorV = 3;
-    lastTime = allTime;
-    delay(500);
-  } else if (activatorV == 3 and digitalRead(activate) == 1) {
-    activatorV = 0;
-    noTone(soundPin);
-    delay(1000);
-  }
   if (allTime - lastTime >= delayTime) {
     if (activatorV == 2) {
       points -= 1;
+      u8g2.firstPage();
+      do {
+        String out1 = "Your Score: " + String(points);
+        String out2 = "High Score: " + String(read2EEPROM(addressSpace1));
+        u8g2.setFont(u8g2_font_helvR12_tr);
+        u8g2.setCursor(0, 13);
+        u8g2.print(out1);
+        u8g2.setCursor(0,28);
+        u8g2.print(out2);
+      } while ( u8g2.nextPage() );
       if (points <= 0) {
         points = 1;
       }
+      if (active == -1) {
+        x=0;
+        y=0;
+        active=0;
+        activatorV=3;
+        GameOver(0,2);
+      }
+    } else if (x!=0) {
+      activatorV=2;
     }
     moveEnemyT1 -= 1;
     moveEnemyT2 -= 1;
@@ -1061,6 +1059,7 @@ void SpaceInvators() {
     }
     if (activatorV == 0 or activatorV == 2) {
       pX-=x;
+      x=0;
       Warp();
       for (int row = 0; row < 2; row++) {
         for (int col = 0; col < 16; col++) {
@@ -1104,18 +1103,175 @@ void SpaceInvators() {
     }
   }
 }
-void DekujemeMoc() {
+void GalaxianGame() {
+  allTime = millis();
+  if (active == -1) {
+    y=0;
+    active=0;
+    activatorV=0;
+    GameOver(points,4);
+  }
+  if (y!=0 and activatorV==0) {
+    activatorV=1;
+    for (int index = 0; index < 4; index++) {
+      lc.clearDisplay(index);
+    }
+  } else if (activatorV==0) {
+    for (int row = 0; row < 3; row++) {
+      for (int col = 0; col < 2; col++) {
+        ShowText(row+pY,col,pgm_read_byte(&(ship[row][col]))); 
+      }
+    }
+    u8g2.firstPage();
+    do {
+      String out1 = "Your Score: " + String(points);
+      String out2 = "High Score: " + String(EEPROM.read(addressGalaxian1));
+      u8g2.setFont(u8g2_font_helvR12_tr);
+      u8g2.setCursor(0, 13);
+      u8g2.print(out1);
+      u8g2.setCursor(0,28);
+      u8g2.print(out2);
+    } while ( u8g2.nextPage() );
+  }
+  if (activatorV==1) {
+    if (allTime-lastTime>=200) {
+      pY-=y;
+      y=0;
+      Warp();
+      for (int row = 0; row < 3; row++) {
+        for (int col = 0; col < 2; col++) {
+          Array[row+pY][col] = pgm_read_byte(&(ship[row][col])) + 1; 
+        }
+      }
+      if (active==1) {
+        active=0;
+        PlaySound(4,0);
+        ShootG(pY+1);
+      }
+      // Cele vykreslovani hry
+      for (int row = 0; row < 16; row++) {
+        for (int col = 0; col < 16; col++) {
+          if (Array[row][col] > 0) {
+            Array[row][col]--;
+            if (Array[row][col]==0) {
+              ShowText(row,col,0);
+            } else if (Array[row][col]==1) {
+              int er = 0;
+              for (int i = 0; i < prucho*2; i++) {
+                if (i%2==0) {
+                  if (row==EnemysG[i] and col==EnemysG[i+1]) {
+                    er = 1;
+                    PlaySound(5,0);
+                    ShowText(EnemysG[i],EnemysG[i+1],0);
+                    ShowText(EnemysG[i],EnemysG[i+1]+1,0);
+                    EnemysG[i]=-EnemysG[i];
+                    ShowText(row,col,0);
+                    if (EnemyDouble[i]>1 and EnemysG[i]!=abs(EnemysG[i])) {
+                      EnemysG[i]=-EnemysG[i];
+                      EnemyDouble[i]-=1;
+                      EnemysG[i+1]=EnemysG[i+1]-1;
+                      ShowText(EnemysG[i],EnemysG[i+1]+2,0);
+                      ShowText(EnemysG[i],EnemysG[i+1]+1,1);
+                    } else if ((EnemysG[i]!=17 and EnemysG[i+1]!=17) and EnemysG[i]!=abs(EnemysG[i])) {
+                      wave+=1;
+                      points+=1;
+                      u8g2.firstPage();
+                      do {
+                        String out1 = "Your Score: " + String(points);
+                        String out2 = "High Score: " + String(EEPROM.read(addressGalaxian1));
+                        u8g2.setFont(u8g2_font_helvR12_tr);
+                        u8g2.setCursor(0, 13);
+                        u8g2.print(out1);
+                        u8g2.setCursor(0,28);
+                        u8g2.print(out2);
+                      } while ( u8g2.nextPage() );
+                      EnemysG[i+1]=17;
+                      EnemysG[i]=17;
+                    }
+                    for (int j = col; j < 16; j++) {
+                      Array[row][j]=0;
+                    }
+                  }
+                }
+              } 
+              if (er!=1) {
+                ShowText(row,col,1);
+              }
+            }
+          }
+        }
+      }
+    }
+    if (allTime-lastTime2>=delayTime) {
+      if (wave>=prucho) {
+        wave=0;
+        moveEnemy1+=1;
+        prucho = EnemyG(moveEnemy1);
+      }
+      for (int i = 0; i < prucho*2; i++) {
+        if (i%2==0) {
+          /*
+          if (EnemysG[i]!=abs(EnemysG[i])) {
+            if (EnemyDouble[i]>1) {
+              EnemysG[i]=-EnemysG[i];
+              EnemyDouble[i]-=1;
+              EnemysG[i+1]=EnemysG[i+1]-1;
+            } else if (EnemysG[i]!=17 and EnemysG[i+1]!=17) {
+              wave+=1;
+              points+=1;
+              u8g2.firstPage();
+              do {
+                String out1 = "Your Score: " + String(points);
+                String out2 = "High Score: " + String(EEPROM.read(addressGalaxian1));
+                u8g2.setFont(u8g2_font_helvR12_tr);
+                u8g2.setCursor(0, 13);
+                u8g2.print(out1);
+                u8g2.setCursor(0,28);
+                u8g2.print(out2);
+              } while ( u8g2.nextPage() );
+              EnemysG[i+1]=17;
+              EnemysG[i]=17;
+            }
+          }
+          */
+          if (EnemysG[i]!=17 and EnemysG[i+1]!=17) {
+            ShowText(EnemysG[i],EnemysG[i+1]+1,0);
+            if (EnemyDouble[i]>1) {
+              for (int j = 1; j < EnemyDouble[i]; j++) {
+                ShowText(EnemysG[i],EnemysG[i+1]-j,1);
+              }
+            }
+            ShowText(EnemysG[i],EnemysG[i+1],1);
+            EnemysG[i+1]--;
+          }
+          if (EnemysG[i+1]<=1) {
+            GameOver(points,4);
+          }
+        }
+      }
+      lastTime2=allTime;
+    }
+  }
+}
+void InfoFun() {
   for (int index = 0; index < 4; index++) {
     lc.clearDisplay(index);
   }
-  for (int i = 0; i < 210; i++) {
-    for (int row = 0; row < 8; row++) {
-      for (int col = 0; col < 16; col++) {
-        ShowText(row,col,pgm_read_byte(&(Dekujeme_vam_za_4_spolecne_roky_uceni[row][col+i+4])));
-      }
+  for (int row = 0; row < 16; row++) {
+    for (int col = 0; col < 16; col++) {
+      ShowText(row,col,pgm_read_byte(&(InfoText[row][col])));
     }
-    PlaySound(7,i);
-    delay(50);
+  }
+  String out[9] = {"Miki toto je", "4 generace", "nasi konzole.", "Programoval", "jsem ji na", "chalupe.", "UZIVEJ a dej", "vedet :)"};
+  for (int i = 0; i < 8; i++) {
+    u8g2.firstPage();
+    do {
+      u8g2.setFont(u8g2_font_helvR12_tr);
+      u8g2.setCursor(0, 13);
+      u8g2.print(out[i]);
+    } while ( u8g2.nextPage() );
+    ActiveButton();
+    delay(200);
   }
   gameState=0;
   goThrough = true;
@@ -1123,19 +1279,26 @@ void DekujemeMoc() {
 void NastaveniHer() {
   if (activatorV == 0) {
     if (soundState==true) {
-      for (int row = 0; row < 8; row++) {
-        for (int col = 0; col < 8; col++) {
-          ShowText(row,col + 8,pgm_read_byte(&(Sound_on[row][col])));
+      for (int row = 0; row < 6; row++) {
+        for (int col = 0; col < 6; col++) {
+          ShowText(row + 1,col + 9,pgm_read_byte(&(Sound_on[row][col])));
         }
       }
     } else if (soundState==false) {
-      for (int row = 0; row < 8; row++) {
-        for (int col = 0; col < 8; col++) {
-          ShowText(row,col + 8,pgm_read_byte(&(Sound_off[row][col])));
+      for (int row = 0; row < 6; row++) {
+        for (int col = 0; col < 6; col++) {
+          ShowText(row + 1,col + 9,pgm_read_byte(&(Sound_off[row][col])));
         }
       }
     }
-    int direction = IsButtonPressed();
+    IsButtonPressed();
+    if (active==-1) {
+      gameState=0;
+      goThrough=true;
+      for (int index = 0; index < 4; index++) {
+          lc.clearDisplay(index);
+      }
+    }
     byte xNula = 1;
     byte yNula = 1;
     if (whichIconShowed!=0) {
@@ -1147,82 +1310,78 @@ void NastaveniHer() {
         xNula = 1;
         yNula = 1;
       }
-      if (whichIconShowed==2) {
-        whichIconShowed -= (abs(y)) * yNula;
-      } else if (whichIconShowed==1) {
-        whichIconShowed += (abs(x) + 1) * xNula;
-        whichIconShowed += (abs(y)) * yNula;
-      } else if (whichIconShowed==3) {
-        whichIconShowed -= (abs(x) + 1) * xNula;
-      }
-    } else if (whichIconShowed==0 and direction!=5) {
+      if (whichIconShowed==1) {
+      whichIconShowed += (abs(x) + 1) * xNula;
+      whichIconShowed += (abs(y)) * yNula;
+    } else if (whichIconShowed==2) {
+      whichIconShowed += (abs(x) + 1) * xNula;
+      whichIconShowed -= (abs(y)) * yNula;
+    } else if (whichIconShowed==3) {
+      whichIconShowed -= (abs(x) + 1) * xNula;
+      whichIconShowed += (abs(y)) * yNula;
+    } else if (whichIconShowed==4) {
+      whichIconShowed -= (abs(x) + 1) * xNula;
+      whichIconShowed -= (abs(y)) * yNula;
+    }
+    } else if (whichIconShowed==0 and active==0) {
       whichIconShowed=2;
     }
-    if (whichIconShowed==2) {
-      ShowBorders(1);
-      if (direction==5) {
-        soundState=!soundState;
-        EEPROM.write(addressSound,soundState);
-        if (soundState==true) {
-          tone(soundPin,147);
-          delay(100);
-          noTone(soundPin);
-        }
-      }
-    } else if (whichIconShowed==1) {
-      ShowBorders(0);
-      if (direction==5) {
-        activatorV = 1;
-        whichIconShowed = 0;
+    ShowBorders(whichIconShowed-1);
+    if (active==1 and whichIconShowed!=0) {
+      active=0;
+      if (whichIconShowed!=4) {
         if (soundState==true) {
           tone(soundPin,147);
           delay(100);
           noTone(soundPin);
         }
         for (int index = 0; index < 4; index++) {
-          lc.clearDisplay(index);
-        }
-        for (int row = 0; row < 8; row++) {
-          for (int col = 0; col < 8; col++) {
-            ShowText(row,col,pgm_read_byte(&(Gold_medal[row][col])));
+            lc.clearDisplay(index);
           }
-        }
-        for (int row = 0; row < 8; row++) {
-          for (int col = 0; col < 8; col++) {
-            ShowText(row,col + 8,pgm_read_byte(&(Silver_medal[row][col])));
-          }
-        }
       }
-    } else if (whichIconShowed==3) {
-      ShowBorders(2);
-      if (direction==5) {
-        activatorV = 2;
-        whichIconShowed = 0;
-        if (soundState==true) {
-          tone(soundPin,147);
-          delay(100);
-          noTone(soundPin);
-        }
-        for (int index = 0; index < 4; index++) {
-          lc.clearDisplay(index);
-        }
-        for (int row = 0; row < 8; row++) {
-          for (int col = 0; col < 8; col++) {
-            ShowText(row,col,pgm_read_byte(&(Gold_medal[row][col])));
+      if (whichIconShowed==2) {
+          gameState=4;
+      } else if (whichIconShowed==1) {
+          activatorV = 1;
+          whichIconShowed = 0;
+          for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+              ShowText(row,col,pgm_read_byte(&(Gold_medal[row][col])));
+            }
           }
-        }
-        for (int row = 0; row < 8; row++) {
-          for (int col = 0; col < 8; col++) {
-            ShowText(row,col + 8,pgm_read_byte(&(Silver_medal[row][col])));
+          for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+              ShowText(row,col + 8,pgm_read_byte(&(Silver_medal[row][col])));
+            }
           }
-        }
+      } else if (whichIconShowed==3) {
+          activatorV = 2;
+          whichIconShowed = 0;
+          for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+              ShowText(row,col,pgm_read_byte(&(Gold_medal[row][col])));
+            }
+          }
+          for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+              ShowText(row,col + 8,pgm_read_byte(&(Silver_medal[row][col])));
+            }
+          }
+      } else if (whichIconShowed==4) {
+          soundState=!soundState;
+          if (soundState==true) {
+            tone(soundPin,147);
+            delay(100);
+            noTone(soundPin);
+          }
+          EEPROM.write(addressSound,soundState);
       }
     }
   } else if (activatorV==1 or activatorV==2) {
-    int direction = IsButtonPressed();
+    IsButtonPressed();
     byte xNula = 1;
     byte yNula = 1;
-    if (direction==5) {
+    if (active==-1) {
       SettingSetting();
     }
     if (whichIconShowed!=0) {
@@ -1239,7 +1398,7 @@ void NastaveniHer() {
       } else if (whichIconShowed==4) {
         whichIconShowed -= (abs(x) + 1) * xNula;
       }
-    } else if (whichIconShowed==0 and direction!=5) {
+    } else if (whichIconShowed==0 and active==0) {
       whichIconShowed=2;
     }
     if (whichIconShowed==2) {
@@ -1268,7 +1427,7 @@ void NastaveniHer() {
         }
     }
   }
-  delay(200);
+  delay(10);
 }
 /****************************************************************/
 //Helping functions
@@ -1281,10 +1440,14 @@ void SettingGameSnake() {
   bodyLength = bodyLengthConst;
   activatorV = 0;
   startingLedOn = true;
-  pX = 7;
-  pY = 7;
+  congrats=0;
+  pX = 0;
+  pY = 15;
   x = 0;
   y = 0;
+  sX=0;
+  sY=0;
+  active=0;
   for (int row = 0; row < 16; row++) {
     for (int col = 0; col < 16; col++) {
       Array[row][col] = 0;
@@ -1293,6 +1456,19 @@ void SettingGameSnake() {
   for (int index = 0; index < 4; index++) {
     lc.clearDisplay(index);
   }
+  u8g2.firstPage();
+  do {
+    //u8g2.setFont(u8g2_font_helvR14_tr);
+    //u8g2.drawStr(0,15,"Hello Wold!");
+    //u8g2.drawStr(0,30,"12345E7890!");
+    String out1 = "Your Score: " + String(bodyLength-3);
+    String out2 = "High Score: " + String(EEPROM.read(addressSnake1));
+    u8g2.setFont(u8g2_font_helvR12_tr);
+    u8g2.setCursor(0, 13);
+    u8g2.print(out1);
+    u8g2.setCursor(0,28);
+    u8g2.print(out2);
+  } while ( u8g2.nextPage() );
 }
 void SettingGameSpace() {
   allTime = millis();
@@ -1311,6 +1487,16 @@ void SettingGameSpace() {
   pX = 0;
   x = 0;
   y = 0;
+  u8g2.firstPage();
+  do {
+    String out1 = "Your Score: " + String(points);
+    String out2 = "High Score: " + String(read2EEPROM(addressSpace1));
+    u8g2.setFont(u8g2_font_helvR12_tr);
+    u8g2.setCursor(0, 13);
+    u8g2.print(out1);
+    u8g2.setCursor(0,28);
+    u8g2.print(out2);
+  } while ( u8g2.nextPage() );
   for (int i = 0; i < 6; i++) {
     Enemys[i] = random(0,3);
   }
@@ -1347,25 +1533,49 @@ void SettingGameSpace() {
     lc.clearDisplay(index);
   }
 }
+void SettingGameGalaxian() {
+  for (int index = 0; index < 4; index++) {
+    lc.clearDisplay(index);
+  }
+  allTime = millis();
+  lastTime=allTime;
+  lastTime2=allTime;
+  pY=13;
+  delayTime=750;
+  moveEnemy1=0;
+  wave=0;
+  points=0;
+  activatorV=0;
+  prucho = 0;
+  for (int i = 0; i < 100; i++) {
+    EnemysG[i]=0;
+    if (i <= 50) {
+      EnemyDouble[i]=0;
+    }
+  }
+  for (int row = 0; row < 16; row++) {
+    for (int col = 0; col < 16; col++) {
+      Array[row][col] = 0;
+    }
+  }
+  u8g2.firstPage();
+  do {
+    String out1 = "Your Score: " + String(points);
+    String out2 = "High Score: " + String(EEPROM.read(addressGalaxian1));
+    u8g2.setFont(u8g2_font_helvR12_tr);
+    u8g2.setCursor(0, 13);
+    u8g2.print(out1);
+    u8g2.setCursor(0,28);
+    u8g2.print(out2);
+  } while ( u8g2.nextPage() );
+}
 void SettingSetting(){
   for (int index = 0; index < 4; index++) {
     lc.clearDisplay(index);
   }
-  for (int row = 0; row < 8; row++) {
-    for (int col = 0; col < 8; col++) {
-      ShowText(row,col,pgm_read_byte(&(Sound_icon[row][col])));
-    }
-  }
-  for (int row = 0; row < 4; row++) {
-    for (int col = 0; col < 4; col++) {
-      ShowText(row + 10,col + 2,pgm_read_byte(&(SnakeMenu[row][col])));
-    }
-  }
-  for (int row = 0; row < 4; row++) {
-    for (int col = 0; col < 4; col++) {
-      ShowText(row + 10,col + 10,pgm_read_byte(&(SpaceInvatorsMenu[row][col])));
-    }
-  }
+  ShowOneDisplay(1,'d');
+  ShowOneDisplay(0,'s');
+  ShowOneDisplay(2,'i');
   activatorV = 0;
   whichIconShowed = 0;
   gameState = 5;
@@ -1376,18 +1586,6 @@ void Warp() {
   pX > 15 ? pX -= 16 : 0;
   pY < 0 ? pY += 16 : 0;
   pY > 15 ? pY -= 16 : 0;
-}
-//Turning Leds Snake
-void TurningLedArray(int row,int col, int state) {
-  if (row < 8 and col < 8) {
-    lc.setLed(0, row, col, state);
-  } else if (row < 8 and col >= 8) {
-    lc.setLed(1, row, col%8, state);
-  } else if (row >= 8 and col < 8) {
-    lc.setLed(2, row%8, col, state);
-  } else if (row >= 8 and col >= 8) {
-    lc.setLed(3, row%8, col%8, state);
-  } 
 }
 //This function is like TurningLedArray but has changed display orientation
 void ShowText(int row,int col, int state) {
@@ -1435,14 +1633,21 @@ void ShowOneDisplay(int display, char what) {
   if (what=='d') {
     for (int row = 0; row < 4; row++) {
       for (int col = 0; col < 4; col++) {
-        lc.setLed(display,map(col,0,7,7,0) - offset,row + offset,pgm_read_byte(&(Dekujeme[row][col])));
+        lc.setLed(display,map(col,0,7,7,0) - offset,row + offset,pgm_read_byte(&(Info[row][col])));
+      }
+    }
+  }
+  if (what=='g') {
+    for (int row = 0; row < 4; row++) {
+      for (int col = 0; col < 4; col++) {
+        lc.setLed(display,map(col,0,7,7,0) - offset,row + offset,pgm_read_byte(&(Galaxian[row][col])));
       }
     }
   }
   if (what=='n') {
     for (int row = 0; row < 4; row++) {
       for (int col = 0; col < 4; col++) {
-        lc.setLed(display,map(col,0,7,7,0) - offset,row + offset,pgm_read_byte(&(Nothing[row][col])));
+        lc.setLed(display,map(col,0,7,7,0) - offset,row + offset,pgm_read_byte(&(Nastaveni[row][col])));
       }
     }
   }
@@ -1489,7 +1694,7 @@ void GenerateFood() {
       foodX = random(0,16);
       foodY = random(0,16); 
     }
-    if (Array[foodX][foodY]==0) {
+    if (Array[foodY][foodX]==0) {
       break;
     } 
   }
@@ -1615,39 +1820,70 @@ void ShootEnemy(int whichEnemy,int rows) {
     }
   }
 }
-int IsButtonPressed() {
+void ShootG(int canon) {
+  for (int col = 0; col < 16; col++) {
+    if (Array[canon][col] == 0) {
+      Array[canon][col] = col;
+    }
+  }
+}
+int EnemyG(int pruchod) {
+  int randomR = 0; // How many enemys - maximum
+  int randomR2 = 0; // How many enemys - between randomR and 1
+  int randomR3 = 0; // How many enemys in one line
+  if (pruchod <= 5) {
+     randomR = 5;
+     randomR3 = 2;
+  } else if (pruchod <= 10 and pruchod > 5) {
+     randomR = 8;
+     randomR3 = 3;
+  } else if (pruchod >= 10) {
+     randomR = 12;
+     randomR3 = 3;
+  }
+  randomR2 = random(1,randomR+1);
+  for (int i = 0; i < randomR2*2; i++) {
+    if (i%2==0) {
+      EnemysG[i] = random(1,15);
+      EnemysG[i+1] = 15;
+      EnemyDouble[i] = random(1, randomR3+1);
+      /*
+      Serial.print("Hlava y: ");
+      Serial.print(EnemysG[i]);
+      Serial.print(" I-y: ");
+      Serial.println(i);
+      Serial.print("Hlava x: ");
+      Serial.print(EnemysG[i+1]);
+      Serial.print(" I-x: ");
+      Serial.println(i+1);
+      */
+      
+    }
+  }
+  return randomR2;
+}
+void IsButtonPressed() {
   x=0;
   y=0;
+  active=0;
   while(true) {
-    Buttons();
-    if (x>0) {
-      return 1;
+    if (x!=0 or y!=0 or active!=0) {
+      break;
     }
-    if (x<0) {
-      return 2;
-    }
-    if (y>0) {
-      return 3;
-    }
-    if (y<0) {
-      return 4;
-    }
-    if (digitalRead(activate)==1) {
-      return 5;
-    }
-    delay(75);
   }
 }
 void ActiveButton() {
+  active=0;
   while (true) {
-    if (digitalRead(activate) == 1) {
+    if (active==1) {
       break;
     }
   }
 }
 void PlaySound(int sound, int i) {
   if (soundState==true) {
-    if (sound == 1) {
+    if (sound == 1 and congratsState == true) {
+      opravaPohybuf+=1;
       tone(soundPin,70);
       soundDelay = 100;
     } else if (sound == 2) {
@@ -1674,6 +1910,10 @@ void PlaySound(int sound, int i) {
       tone(soundPin,i);
       delay(150);
       soundDelay = 0;
+    } else if (sound == 9) {
+      float noty[5] = {130.813,164.814,195,998,329.621};
+      tone(soundPin,noty[i]);
+      soundDelay = 200;
     }
   }
 }
@@ -1692,6 +1932,34 @@ int read2EEPROM(int address) {
   int result = (byte1 << 8) + byte2;
   return result;
 }
+void DrawMenu() {
+  int whichIcon = 0x0;
+  int batteryValue = analogRead(battery);
+  float mapBattery = (batteryValue * 5.0) / 1024.0;
+  if (mapBattery >= 3.8) {
+    whichIcon = 0x34;
+  } else if (mapBattery < 3.8 and mapBattery >= 3.2) {
+    whichIcon = 0x33;
+  } else if (mapBattery < 3.2 and mapBattery >= 2.9) {
+    whichIcon = 0x32;
+  } else if (mapBattery < 2.9 and mapBattery >= 2.6) {
+    whichIcon = 0x31;
+  } else if (mapBattery < 2.6) {
+    whichIcon = 0x30;
+  }  
+  u8g2.firstPage();
+  do {
+    String out1 = String(mapBattery) + "V";
+    String out2 = "Ver. - " + versionUrxOS;
+    u8g2.setFont(u8g2_font_battery24_tr);
+    u8g2.drawGlyph(100,24,whichIcon);
+    u8g2.setFont(u8g2_font_helvR12_tr);
+    u8g2.setCursor(0, 13);
+    u8g2.print(out1);
+    u8g2.setCursor(0, 28);
+    u8g2.print(out2);
+  } while ( u8g2.nextPage() );
+}
 /****************************************************************/
 //Loop
 /****************************************************************/
@@ -1709,9 +1977,11 @@ void loop() {
   } else if (gameState==3) {
     SpaceInvators();
   } else if (gameState==4) {
-    DekujemeMoc();
+    InfoFun();
   } else if (gameState==5) {
     NastaveniHer();
+  } else if (gameState==6) {
+    GalaxianGame();
   }
   if (soundTime - soundLastTime >= soundDelay) {
     noTone(soundPin);
@@ -1722,9 +1992,15 @@ void loop() {
     } else if (soundDelay == 9) {
       tone (soundPin, 97);
       soundDelay = 7;
+    } else if (soundDelay == 200) {
+        if (congrats > 3) {
+          soundDelay=0;
+        } else {
+          congrats+=1;
+          congratsState=true;
+        }
     } else {
       soundDelay=0;
     }
   }
-  //delay(10);
 }
