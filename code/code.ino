@@ -1,6 +1,6 @@
 //(Snad posledni verze) Po druhym vyhorenim jsme se rozhodl udelat algoritmus smesi for cyklu(verze jedna) a smerem zapinani a zapinani(verze dva) JDU NA TO
 //OLED displey https://s.click.aliexpress.com/e/_APw28Y
-#include <Urx.h>
+#include <Urx.h> 
 #include <EEPROM.h>
 #include <U8g2lib.h>
 U8G2_SH1106_128X32_VISIONOX_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE); 
