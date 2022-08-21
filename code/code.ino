@@ -3,12 +3,13 @@
 #include <Urx.h> 
 #include <EEPROM.h>
 #include <U8g2lib.h>
+#include <Wire.h>
 U8G2_SH1106_128X32_VISIONOX_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE); 
 LedControl lc = LedControl(11, 12, 10, 4);
-Operator op = Operator(4);
-Images img = Images();
+Operator op();
+Images img();
 /*Structure 
-SETUP FAZE -------------------
+SETUP FAZE ------------------- 
 void Setup() - Runs on starting sketch
 INPUT FAZE -------------------
 void Button() - Function is for getting inputs from buttons
@@ -186,7 +187,7 @@ void Menu(bool firstGoThrough, bool go) {
         for (int col = 0; col < 16; col++) {
           int nazev[] = {pgm_read_byte(&(HolTyc1[row][col])),pgm_read_byte(&(HolTyc2[row][col])),pgm_read_byte(&(HolTyc3[row][col])),pgm_read_byte(&(HolTyc4[row][col])),pgm_read_byte(&(HolTyc4[row][col])),pgm_read_byte(&(HolTyc4[row][col]))};
           ShowText(row,col,nazev[i]);
-          soundDelay = op.playSound(6,i);
+          PlaySound(6,i);
         } 
         delay(5);
       }
@@ -291,6 +292,7 @@ void Menu(bool firstGoThrough, bool go) {
   }
   delay(10);
 }
+
 //GameOver function
 void GameOver(int score, int game) {
   //Changing gameState for gameOver state
@@ -394,7 +396,7 @@ void Snake() {
     noTone(soundPin);
   }
   if (((bodyLength-3) > EEPROM.read(addressSnake1) and congratsState==true) and congrats <= 3) {
-    soundDelay = op.playSound(9,congrats);
+    PlaySound(9,congrats);
     congratsState=false;
   }
   if (activatorV == 0) {
@@ -440,12 +442,13 @@ void Snake() {
           }
         }
         if (soundDelay == 0 and (sX !=0 or sY !=0)) {
-            soundDelay = op.playSound(1,0);
+            PlaySound(1,0);
           }
         //If snake eated the food
         if (Array[pY][pX] == Array[foodY][foodX] && Array[pY][pX]!=0) {
   //        Serial.println("snez");
-          soundDelay = op.playSound(2,0);
+          noTone(soundPin);
+          PlaySound(2,0);
           bodyLength += 1;
           delayTime -= 0.5;
           foodX=-1;
@@ -479,7 +482,7 @@ void SpaceInvators() {
       }
     }
     active=0;
-    soundDelay = op.playSound(4,0);
+    PlaySound(4,0);
   } else if (bulletTimer>0) {
     bulletTimer -= 1;
     if (Array[bulletPosition[1]][bulletPosition[0]] == 1) {
@@ -487,7 +490,7 @@ void SpaceInvators() {
       if (bulletPosition[1] > 7) {
         bulletTimer=0;
         Array[bulletPosition[1]][bulletPosition[0]] = 0;
-        soundDelay = op.playSound(5,0);
+        PlaySound(5,0);
       }
       if (bulletPosition[1] < 7) {
         Destroy(bulletPosition[1],bulletPosition[0]);
@@ -535,8 +538,8 @@ void SpaceInvators() {
                 ShowText(row+14,col+pX,nazev1[d]);
               }
             }
-            soundDelay = op.playSound(8,noty[d]);
-            soundDelay = op.playSound(8,noty[d+1]);
+            PlaySound(8,noty[d]);
+            PlaySound(8,noty[d+1]);
             noty[d] = noty[d+2];
             noty[d+1] = noty[d+3];
           }
@@ -577,8 +580,8 @@ void SpaceInvators() {
                 ShowText(row + 14,col + pX,nazev1[d]);
               }
             }
-            soundDelay = op.playSound(8,noty[d]);
-            soundDelay = op.playSound(8,noty[d+1]);
+            PlaySound(8,noty[d]);
+            PlaySound(8,noty[d+1]);
             noty[d] = noty[d+2];
             noty[d+1] = noty[d+3]; 
           }
@@ -744,7 +747,7 @@ void GalaxianGame() {
       }
       if (active==1) {
         active=0;
-        soundDelay = op.playSound(4,0);
+        PlaySound(4,0);
         ShootG(pY+1);
       }
       // Cele vykreslovani hry
@@ -760,7 +763,7 @@ void GalaxianGame() {
                 if (i%2==0) {
                   if (row==EnemysG[i] and col==EnemysG[i+1]) {
                     er = 1;
-                    soundDelay = op.playSound(5,0);
+                    PlaySound(5,0);
                     ShowText(EnemysG[i],EnemysG[i+1],0);
                     ShowText(EnemysG[i],EnemysG[i+1]+1,0);
                     EnemysG[i]=-EnemysG[i];
@@ -809,6 +812,7 @@ void GalaxianGame() {
       }
       for (int i = 0; i < prucho*2; i++) {
         if (i%2==0) {
+          /*
           if (EnemysG[i]!=abs(EnemysG[i])) {
             if (EnemyDouble[i]>1) {
               EnemysG[i]=-EnemysG[i];
@@ -831,6 +835,7 @@ void GalaxianGame() {
               EnemysG[i]=17;
             }
           }
+          */
           if (EnemysG[i]!=17 and EnemysG[i+1]!=17) {
             ShowText(EnemysG[i],EnemysG[i+1]+1,0);
             if (EnemyDouble[i]>1) {
@@ -1334,7 +1339,7 @@ void Destroy(int row, int col) {
   }
   Enemys[whichEnemy] = 4;
   load = true;
-  soundDelay = op.playSound(3,0);
+  PlaySound(3,0);
 }
 void MoveEnemys(int rows) {
   load = true;
@@ -1477,7 +1482,7 @@ void ActiveButton() {
     }
   }
 }
-/*void PlaySound(int sound, int i) {
+void PlaySound(int sound, int i) {
   if (soundState==true) {
     if (sound == 1 and congratsState == true) {
       opravaPohybuf+=1;
@@ -1514,7 +1519,6 @@ void ActiveButton() {
     }
   }
 }
-*/
 void write2EEPROM(int address, int number) {
   byte byte1 = (number >> 8) & 0xFF;
   byte byte2 = number & 0xFF;
