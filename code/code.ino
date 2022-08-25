@@ -74,8 +74,6 @@ const int allLedTurnOff = 0b00000000;
 const int addressSound = 1;
 const int addressSnake1 = 2;
 const int addressSnake2 = 3;
-const int addressSpace1 = 4;
-const int addressSpace2 = 6;
 const int addressGalaxian1 = 7;
 const int addressGalaxian2 = 8;
 //Movement variables
@@ -92,15 +90,7 @@ int bodyLength = 3;
 int opravaPohybu = 0;
 int opravaPohybuf = 0;
 int activatorV = 0;
-int bulletTimer = 0;
-int enBulletTimer1 = 0;
-int enBulletTimer2 = 0;
-int differenceCol = 0;
-int moduloThree = 0;
 int moveEnemy1 = 0;
-int moveEnemy2 = 3;
-int moveEnemyT1 = 2;
-int moveEnemyT2 = 4;
 int wave = 0;
 int computer = 0;
 int points = 0;
@@ -284,7 +274,6 @@ void Menu(bool firstGoThrough, bool go) {
       SettingSetting();
     } else if (whichIconShowed==4) {
       //Showing menu text I - Space Invators
-      SettingGameSpace();
       gameState = 3;
     }
   }
@@ -324,13 +313,6 @@ void GameOver(int score, int game) {
       EEPROM.write(addressSnake1,score);
     } else if (EEPROM.read(addressSnake2) < score) {
       EEPROM.write(addressSnake2,score);
-    }
-  } else if (game == 2 or game == 3) {
-    if (read2EEPROM(addressSpace1) <= score) {
-      write2EEPROM(addressSpace2,read2EEPROM(addressSpace1));
-      write2EEPROM(addressSpace1,score);
-    } else if (read2EEPROM(addressSpace2) < score) {
-      write2EEPROM(addressSpace2,score);
     }
   } else if (game == 4) {
     if (EEPROM.read(addressGalaxian1) <= score) {
@@ -466,240 +448,6 @@ void Snake() {
         //Resetting timer
         lastTime = allTime;
       }
-    }
-  }
-}
-void SpaceInvators() {
-  allTime = millis();
-  if (active==1 and bulletTimer==0 and activatorV == 2) {
-    for (int col = 0; col < 16; col++) {
-      if (Array[15][col] == 1) {
-        bulletTimer = 14;
-        bulletPosition[0] = col - 1; 
-        bulletPosition[1] = 13;
-      }
-    }
-    active=0;
-    PlaySound(4,0);
-  } else if (bulletTimer>0) {
-    bulletTimer -= 1;
-    if (Array[bulletPosition[1]][bulletPosition[0]] == 1) {
-      bulletTimer=0;
-      if (bulletPosition[1] > 7) {
-        bulletTimer=0;
-        Array[bulletPosition[1]][bulletPosition[0]] = 0;
-        PlaySound(5,0);
-      }
-      if (bulletPosition[1] < 7) {
-        Destroy(bulletPosition[1],bulletPosition[0]);
-        computer=0;
-        for (int i = 0; i < 6; i++) {
-          if (Enemys[i]==5 or Enemys[i]==4) {
-            computer+=1;
-          }
-        }
-        bulletTimer = 0;
-      }
-    }
-    ShowText(bulletPosition[1],bulletPosition[0],1);
-    bulletPosition[1] -=  1;    
-    if (computer >=6) {
-      computer = 0;
-      noTone(soundPin);
-      GameOver(points,3);
-      activatorV = -5;
-    } else {
-      computer = 0;
-    }
-  }
-  if (enBulletTimer1>0 and activatorV == 2) {
-    enBulletTimer1 -= 1;
-    if (Array[enBulletPosition1[1]][enBulletPosition1[0]] == 1) {
-      if (enBulletPosition1[1] >= 8 and enBulletPosition1[1] < 14) {
-        Array[enBulletPosition1[1]][enBulletPosition1[0]] = 0;
-        Array[enBulletPosition1[1]][enBulletPosition1[0] + 1] = 0;
-        Array[enBulletPosition1[1]][enBulletPosition1[0] - 1] = 0;
-        Array[enBulletPosition1[1] + 1][enBulletPosition1[0]] = 0;
-        enBulletTimer1 = 0;
-        enBulletPosition1[0] = 0;
-        enBulletPosition1[1] = 0;
-        //PlaySound(5);
-      } else if (enBulletPosition1[1] >= 14) {
-          for (int index = 0; index < 4; index++) {
-            lc.clearDisplay(index);
-          }
-          int noty[6] = {196,233,147,131,233,196};
-          for (int d = 0; d < 3; d++) {
-            for (int row = 0; row < 2; row++) {
-              for (int col = 0; col < 3; col++) {
-                int nazev1[3] = {pgm_read_byte(&(lod[row][col])),pgm_read_byte(&(ship_explosion1[row][col])),pgm_read_byte(&(ship_explosion2[row][col]))};
-                ShowText(row+14,col+pX,nazev1[d]);
-              }
-            }
-            PlaySound(8,noty[d]);
-            PlaySound(8,noty[d+1]);
-            noty[d] = noty[d+2];
-            noty[d+1] = noty[d+3];
-          }
-          GameOver(0,2);
-          activatorV = -5;
-      }
-    }
-    if (enBulletPosition1[0]==0 and enBulletPosition1[1] == 0) {
-      ShowText(enBulletPosition1[1],enBulletPosition1[0],0);
-    } else {
-      ShowText(enBulletPosition1[1],enBulletPosition1[0],1);
-      enBulletPosition1[1] += 1;
-    }
-    if (enBulletPosition1[1] >= 16) {
-      enBulletTimer1 = 0;
-    }
-  }
-  if (enBulletTimer2>0 and activatorV == 2) {
-    enBulletTimer2 -= 1;
-    if (Array[enBulletPosition2[1]][enBulletPosition2[0]] == 1) {
-      if (enBulletPosition2[1] >= 8 and enBulletPosition2[1] < 14) {
-        Array[enBulletPosition2[1]][enBulletPosition2[0]] = 0;
-        Array[enBulletPosition2[1]][enBulletPosition2[0] + 1] = 0;
-        Array[enBulletPosition2[1]][enBulletPosition2[0] - 1] = 0;
-        Array[enBulletPosition2[1] + 1][enBulletPosition2[0]] = 0;
-        enBulletTimer2=0;
-        enBulletPosition2[0] = 0;
-        enBulletPosition2[1] = 0;
-      } else if (enBulletPosition2[1] >= 14) {
-        for (int index = 0; index < 4; index++) {
-            lc.clearDisplay(index);
-          }
-          int noty[6] = {196,233,147,131,233,196};
-          for (int d = 0; d < 3; d++) {
-            for (int row = 0; row < 2; row++) {
-              for (int col = 0; col < 3; col++) {
-                int nazev1[3] = {pgm_read_byte(&(lod[row][col])),pgm_read_byte(&(ship_explosion1[row][col])),pgm_read_byte(&(ship_explosion2[row][col]))};
-                ShowText(row + 14,col + pX,nazev1[d]);
-              }
-            }
-            PlaySound(8,noty[d]);
-            PlaySound(8,noty[d+1]);
-            noty[d] = noty[d+2];
-            noty[d+1] = noty[d+3]; 
-          }
-          GameOver(0,2);
-          activatorV = -5;
-      }
-    }
-    if (enBulletPosition2[0]==0 and enBulletPosition2[1] == 0) {
-      ShowText(enBulletPosition2[1],enBulletPosition2[0],0);
-    } else {
-      ShowText(enBulletPosition2[1],enBulletPosition2[0],1);
-      enBulletPosition2[1] += 1;
-    }
-    if (enBulletPosition2[1] >= 16) {
-      enBulletTimer2 = 0;
-    }
-  }
-  if (allTime - lastTime >= delayTime) {
-    if (activatorV == 2) {
-      points -= 1;
-      u8g2.firstPage();
-      do {
-        String out1 = "Your Score: " + String(points);
-        String out2 = "High Score: " + String(read2EEPROM(addressSpace1));
-        u8g2.setFont(u8g2_font_helvR12_tr);
-        u8g2.setCursor(0, 13);
-        u8g2.print(out1);
-        u8g2.setCursor(0,28);
-        u8g2.print(out2);
-      } while ( u8g2.nextPage() );
-      if (points <= 0) {
-        points = 1;
-      }
-      if (active == -1) {
-        x=0;
-        y=0;
-        active=0;
-        activatorV=3;
-        GameOver(0,2);
-      }
-    } else if (x!=0) {
-      activatorV=2;
-    }
-    moveEnemyT1 -= 1;
-    moveEnemyT2 -= 1;
-    lastTime=allTime;
-    if (moveEnemyT1 == 0) {
-      moveEnemyT1 = 2;
-      MoveEnemys(1);
-      for (int i = 0; i < 3; i++) {
-        if (Enemys[i] == 5 or Enemys[i] == 4) {
-          computer += 1;
-        }
-      }
-      if (computer >= 3) {
-        computer = 0;
-      } else {
-        ShootEnemy(random(0,3),1);
-      }
-    }
-    if (moveEnemyT2 == 0) {
-      moveEnemyT2 = 3;
-      MoveEnemys(2);
-      for (int i = 0; i < 3; i++) {
-        if (Enemys[i + 3] == 5 or Enemys[i + 3] == 4) {
-          computer += 1;
-        } 
-      }
-      if (computer >= 3) {
-        computer = 0;
-      } else {
-        ShootEnemy(random(3,6),2);
-      }
-    }
-    if (x!=0 and (activatorV == 0 or activatorV==1)) {
-      activatorV = 2;
-    }
-    if (activatorV == 0 or activatorV == 2) {
-      pX-=x;
-      x=0;
-      Warp();
-      for (int row = 0; row < 2; row++) {
-        for (int col = 0; col < 16; col++) {
-          Array[row+14][col] = 0;
-        }
-      }
-      if (activatorV == 0) {
-        activatorV = 1;
-      }
-      for (int row = 0; row < 16; row++) {
-        for (int col = 0; col < 16; col++) {
-          if (pgm_read_byte(&(lod[row][col]))==1 and col < 3 and row < 2) {
-            Array[row + 14][col+pX] = 1;
-          } else if (row < 2 and col < 4) {
-            Array[row + 14][col+pX] = 0;
-            Array[row + 14][col+pX-4] = 0;
-          } 
-          if (load == true) {
-            if (row <= 1 and activatorV==2) {
-              ShowSprite(row,col,0,0,moveEnemy1,Enemys[0]);
-              ShowSprite(row,col,0,0,moveEnemy1+4,Enemys[1]);
-              ShowSprite(row,col,0,0,moveEnemy1+8,Enemys[2]);
-            } else if (row >= 3 and row <= 4 and activatorV==2) {
-              ShowSprite(row,col,0,1,moveEnemy2,Enemys[3]);
-              ShowSprite(row,col,0,1,moveEnemy2+4,Enemys[4]);
-              ShowSprite(row,col,0,1,moveEnemy2+8,Enemys[5]);
-            }
-          }
-          if (Array[row][col]==1) {
-            ShowText(row,col,1);
-          } else {
-            ShowText(row,col,0);
-          }
-//          Serial.print(Array[row][col]);
-//          Serial.print(",");
-        }
-//        Serial.println(";");
-      }
-      load = false;
-//      Serial.println("-----------------");
     }
   }
 }
@@ -852,6 +600,9 @@ void GalaxianGame() {
       lastTime2=allTime;
     }
   }
+}
+void DanceMan() {
+  
 }
 void InfoFun() {
   for (int index = 0; index < 4; index++) {
@@ -1010,8 +761,6 @@ void NastaveniHer() {
       }
       if (activatorV==1) {
         ShowNumbers(EEPROM.read(addressSnake1));
-      } else if (activatorV==2) {
-        ShowNumbers(read2EEPROM(addressSpace1));
       }
     } else if (whichIconShowed==4) {
         ShowBorders(3);
@@ -1022,9 +771,7 @@ void NastaveniHer() {
         }
         if (activatorV==1) {
           ShowNumbers(EEPROM.read(addressSnake2));
-      } else if (activatorV==2) {
-          ShowNumbers(read2EEPROM(addressSpace2));
-        }
+      }
     }
   }
   delay(10);
@@ -1069,69 +816,6 @@ void SettingGameSnake() {
     u8g2.setCursor(0,28);
     u8g2.print(out2);
   } while ( u8g2.nextPage() );
-}
-void SettingGameSpace() {
-  allTime = millis();
-  lastTime=allTime;
-  delayTime = 10;
-  enBulletTimer1 = 0;
-  enBulletTimer2 = 0;
-  bulletTimer = 0;
-  activatorV = 0;
-  moveEnemyT1 = 2;
-  moveEnemyT2 = 3;
-  moveEnemy1 = 1;
-  moveEnemy2 = 4;
-  points = 999;
-  load = true;
-  pX = 0;
-  x = 0;
-  y = 0;
-  u8g2.firstPage();
-  do {
-    String out1 = "Your Score: " + String(points);
-    String out2 = "High Score: " + String(read2EEPROM(addressSpace1));
-    u8g2.setFont(u8g2_font_helvR12_tr);
-    u8g2.setCursor(0, 13);
-    u8g2.print(out1);
-    u8g2.setCursor(0,28);
-    u8g2.print(out2);
-  } while ( u8g2.nextPage() );
-  for (int i = 0; i < 6; i++) {
-    Enemys[i] = random(0,3);
-  }
-  for (int row = 0; row < 16; row++) {
-    for (int col = 0; col < 16; col++) {
-      if (row <= 11 and row >= 8) {
-        if (col >= 1 and col <= 4) {
-          Array[row][col] = pgm_read_byte(&(block[row % 8][col - 1]));
-        }
-        if (col >= 6 and col <= 9) {
-          Array[row][col] = pgm_read_byte(&(block[row % 8][(col - 2) % 4]));
-        }
-        if (col >= 11 and col <= 14) {
-          Array[row][col] = pgm_read_byte(&(block[row % 8][(col - 3) % 8]));
-        }
-      } else if (row <= 1) {
-        ShowSprite(row,col,0,0,moveEnemy1,Enemys[0]);
-        ShowSprite(row,col,0,0,moveEnemy1+4,Enemys[1]);
-        ShowSprite(row,col,0,0,moveEnemy1+8,Enemys[2]);
-      } else if (row >= 3 and row <= 4) {
-        ShowSprite(row,col,0,1,moveEnemy2,Enemys[3]);
-        ShowSprite(row,col,0,1,moveEnemy2+4,Enemys[4]);
-        ShowSprite(row,col,0,1,moveEnemy2+8,Enemys[5]);
-      } else {
-        Array[row][col] = 0;
-      }
-      //Serial.print(Array[row][col]);
-      //Serial.print(",");
-    }
-    //Serial.println(";");
-  }
-  //Serial.println("-----------------");
-  for (int index = 0; index < 4; index++) {
-    lc.clearDisplay(index);
-  }
 }
 void SettingGameGalaxian() {
   for (int index = 0; index < 4; index++) {
@@ -1197,28 +881,6 @@ void ShowText(int row,int col, int state) {
     lc.setLed(0, map(col,0,7,7,0), row % 8, state);
   } else if (row >= 8 and col >= 8) {
     lc.setLed(2, map(col % 8,0,7,7,0), row % 8, state);
-  }
-}
-void ShowSprite(int row, int col, int animState, int differenceRow, int positionE, int whichEnemy) {
-  if (positionE % 2 == 1) {
-    differenceCol = 1;
-  } else if (positionE % 2 == 0) {
-    differenceCol = 0;
-  } 
-  if (col >= 2) {
-    moduloThree = 2;
-  } else {
-    //mozna problem
-    moduloThree = 1000;
-  }
-  if (whichEnemy==4 or whichEnemy==5) {
-    if (col >= positionE and col <= positionE+1) {
-      Array[row][col] = 0;
-    }
-  } else if ((col >= positionE and col <= positionE+1) and (row >= 3 and row <=4)) {
-    Array[row][col] = pgm_read_byte(&(enemy1[(row - 1) % 2][(col - differenceCol) % moduloThree]));
-  } else if (col == positionE and row <= 1) {
-    Array[row][col] = pgm_read_byte(&(enemy2[row][(col - differenceCol) % moduloThree]));
   }
 }
 void ShowOneDisplay(int display, char what) {
@@ -1304,119 +966,6 @@ void GenerateFood() {
       if (Array[row][col] > 0 ) {
         Array[row][col]++;
       }
-    }
-  }
-}
-void Destroy(int row, int col) {
-  int whichEnemy = -1;
-  if (row <= 1) {
-    bodyLength = 1;
-    if(moveEnemy1 == col) {
-      whichEnemy = 0;
-    } else if (moveEnemy1 + 4 == col) {
-      whichEnemy = 1;
-    } else if (moveEnemy1 + 8 == col) {
-      whichEnemy = 2;
-    }
-    
-  } else if (row >= 3 and row <= 4) {
-    bodyLength = 2;
-    if(moveEnemy2 == col) {
-      whichEnemy = 3;
-    } else if(moveEnemy2 + 1 == col) {
-      whichEnemy = 3;
-    } else if (moveEnemy2 + 4 == col) {
-      whichEnemy = 4;
-    } else if (moveEnemy2 + 5 == col) {
-      whichEnemy = 4;
-    } else if (moveEnemy2 + 8 == col) {
-      whichEnemy = 5;
-    } else if (moveEnemy2 + 9 == col) {
-      whichEnemy = 5;
-    }
-  }
-  Enemys[whichEnemy] = 4;
-  load = true;
-  PlaySound(3,0);
-}
-void MoveEnemys(int rows) {
-  load = true;
-  if (rows==1) {
-    if (moveEnemy1==5) {
-      foodY = 1;
-    } else if (moveEnemy1==1) {
-      foodY = 0;
-    }
-    if (foodY==1) {
-      moveEnemy1 -= 1;
-    } else {
-      moveEnemy1 += 1;
-    }
-    for (int row = 0; row < 7; row++) {
-        for (int col = 0; col < 16; col++) {
-          Array[row][col] = 0;
-        }
-      }
-  } else if (rows==2) {
-    if (moveEnemy2==5) {
-      foodX = 1;
-    } else if (moveEnemy2==1) {
-      foodX = 0;
-    }
-    if (foodX==1) {
-      moveEnemy2 -= 1;
-    } else {
-      moveEnemy2 += 1;
-    }
-    for (int row = 0; row < 7; row++) {
-        for (int col = 0; col < 16; col++) {
-          Array[row][col] = 0;
-        }
-      } 
-  }
-}
-void ShootEnemy(int whichEnemy,int rows) {
-  while (Enemys[whichEnemy] == 5 or Enemys[whichEnemy] == 4) {
-    if (rows == 1) {
-      whichEnemy = random(0,3);
-    } else if (rows == 2) {
-      whichEnemy = random(3,6);
-    }
-  }
-  if (enBulletTimer1 == 0) {
-    if (whichEnemy == 0) {
-      enBulletTimer1 = 14;
-      enBulletPosition1[1] = 2;
-      enBulletPosition1[0] = moveEnemy1;
-      return;
-    } else if (whichEnemy == 1) {
-      enBulletTimer1 = 14;
-      enBulletPosition1[1] = 2;
-      enBulletPosition1[0] = moveEnemy1 + 4;
-      return;
-    } else if (whichEnemy == 2) {
-      enBulletTimer1 = 14;
-      enBulletPosition1[1] = 2;
-      enBulletPosition1[0] = moveEnemy1 + 8;
-      return;
-    } 
-  }
-  if (enBulletTimer2 == 0) {
-    if (whichEnemy == 3) {
-      enBulletTimer2 = 11;
-      enBulletPosition2[1] = 5;
-      enBulletPosition2[0] = moveEnemy2;
-      return;
-    } else if (whichEnemy == 4) {
-      enBulletTimer2 = 11;
-      enBulletPosition2[1] = 5;
-      enBulletPosition2[0] = moveEnemy2 + 4;
-      return;
-    } else if (whichEnemy == 5) {
-      enBulletTimer2 = 11;
-      enBulletPosition2[1] = 5;
-      enBulletPosition2[0] = moveEnemy2 + 8;
-      return;
     }
   }
 }
@@ -1575,7 +1124,7 @@ void loop() {
     menuFirstWalkThrough = false;
     goThrough = false;
   } else if (gameState==3) {
-    SpaceInvators();
+    DanceMan();
   } else if (gameState==4) {
     InfoFun();
   } else if (gameState==5) {
