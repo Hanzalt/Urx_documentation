@@ -52,9 +52,8 @@ unsigned long lastTime = 0;
 unsigned long lastTime2 = 0;
 unsigned long soundTime = 0;
 unsigned long soundLastTime = 0;
-unsigned long lastDebounceTime = 0; 
-unsigned long interrupt_time = 0;
-int debounceDelay = 80;
+unsigned long lastDebounceTime = 0;       
+int debounceDelay = 50;
 int soundDelay = 0;
 //Buttons variables
 const int forward = 7;//7,8
@@ -160,12 +159,11 @@ void setup() {
 //Input functions
 /****************************************************************/
 void blink() { //Function for all buttons it is called with interupts so that means that is will go here every time you press button.
-  interrupt_time = millis();
-  if (interrupt_time-lastDebounceTime > debounceDelay) {
+  if ((millis()-lastDebounceTime) > debounceDelay) {
     y=(!digitalRead(forward) * 1) | (!digitalRead(down) * -1);
     x=(!digitalRead(left) * 1) | (!digitalRead(right) * -1);
     active=(!digitalRead(a) * 1) | (!digitalRead(b) * -1);
-    lastDebounceTime = interrupt_time; 
+    lastDebounceTime = millis();
   }
 }
 /****************************************************************/
