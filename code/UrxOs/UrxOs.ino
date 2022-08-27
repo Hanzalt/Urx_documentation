@@ -37,7 +37,7 @@ void Loop() - Runs every 1/100s or every 10 ms
 /****************************************************************/
 
 //Food position variables
-String versionUrxOS = "0.4.0";
+String versionUrxOS = "0.6.0";
 int foodX = 0;
 int foodY = 0;
 //Delay in game is overrided when function SettingGameSnake is called
@@ -158,7 +158,7 @@ void blink() { //Function for all buttons it is called with interupts so that me
 //Helping functions
 /****************************************************************/
 //This function is like TurningLedArray but has changed display orientation
-void displayImage(const word* image, int displaySizeX=8, int displaySizeY=0, int displayBig=0, int offsetX=0, int offsetY=0) {
+void displayImage(const word* image, int displaySizeX=8, int displaySizeY=0, int display=0, int offsetX=0, int offsetY=0) {
   int MirrorX = displaySizeX-1;
   int MirrorY = displaySizeY-1;
   for (int index = 0; index < 2; index++) {
@@ -170,7 +170,7 @@ void displayImage(const word* image, int displaySizeX=8, int displaySizeY=0, int
         lc.setRow(index + index, MirrorX-rows, byte2);
       } else if (displaySizeX < 8) {
         for (int cols = 0; cols < displaySizeY; cols++) {
-          lc.setLed(displayBig, MirrorX-rows - offsetX, MirrorY-cols - offsetY, bitRead(pgm_read_word(&image[rows]), cols));
+          lc.setLed(display, MirrorX-rows - offsetX, MirrorY-cols - offsetY, bitRead(pgm_read_word(&image[rows]), cols));
         }
       }
     }
@@ -280,24 +280,28 @@ void ShowBorders(int display) {
   lc.setColumn(display,7,allLedTurnOn);
   lc.setColumn(display,0,allLedTurnOn);
 }
-void ShowText(int row,int col, int state) {
+void displayLed(int row,int col, int state) {
 if (row < 8 and col < 8) {
-  lc.setLed(1, map(col,0,7,7,0), row, state);
+  lc.setLed(1, 7-col, row, state);
 } else if (row < 8 and col >= 8) {
-  lc.setLed(3, map(col % 8,0,7,7,0), row, state);
+  lc.setLed(3, 7-col%8, row, state);
 } else if (row >= 8 and col < 8) {
-  lc.setLed(0, map(col,0,7,7,0), row % 8, state);
+  lc.setLed(0, 7-col, row%8, state);
 } else if (row >= 8 and col >= 8) {
-  lc.setLed(2, map(col % 8,0,7,7,0), row % 8, state);
+  lc.setLed(2, 7-col%8, row%8, state);
 }
 }
 void displayNumbers(int number) {
   String gameScore = String(number);
-  for (int row = 0; row < 7; row++) {
-    for (int col = 0; col < 16; col++) {
-      ShowText(row + 8,col,0);
+  const word* nazev[] = {Zerox4,Onex4,Twox4,Threex4,Fourx4,Fivex4,Sixx4,Sevenx4,Eightx4,Ninex4};
+  for (int i = 0; i < gameScore.length(); i++) {
+    if (i==2) {
+      displayImage(nazev[gameScore[i] - '0'], 4, 7, 2, -3, -1);
+    } else {
+      displayImage(nazev[gameScore[i] - '0'], 4, 7, 0, -4+(i*4), -1);
     }
   }
+  /*
   for (int row = 0; row < 7; row++) {
     for (int col = 0; col < 4; col++) {
       for (int i = 0; i < gameScore.length(); i++) {
@@ -307,6 +311,7 @@ void displayNumbers(int number) {
       }
     }
   }
+  */
 }
 void GenerateFood() {
   while (true) {
@@ -396,10 +401,12 @@ void PlaySound(int sound, int i) {
     } else if (sound == 2) {
       tone (soundPin,260);
       soundDelay = 250;
-    } else if (sound == 3) {
+    } 
+    /*else if (sound == 3) {
       tone (soundPin, 40);
       soundDelay = 10;
-    } else if (sound == 4) {
+    } 
+    */else if (sound == 4) {
       noTone(soundPin);
       tone (soundPin, 147);
       soundDelay = 100;
@@ -407,18 +414,13 @@ void PlaySound(int sound, int i) {
       noTone(soundPin);
       tone (soundPin, 87);
       soundDelay = 9;
-    } else if (sound == 6) {
-      int noty[] = {175,233,73.5,220,73.5,92.5};
-      tone(soundPin,noty[i]);
-    } else if (sound == 7) {
-      int noty[16] = {147,247,220,196,165,330,294,262,156,233,220,196,139,233,220,196};
-      tone(soundPin,noty[i % 16]);
-    } else if (sound == 8) {
+    }/* else if (sound == 8) {
       tone(soundPin,i);
       delay(150);
       soundDelay = 0;
-    } else if (sound == 9) {
-      float noty[5] = {130.813,164.814,195,998,329.621};
+    }
+    */else if (sound == 9) {
+      const float noty[5] = {130.813,164.814,195,998,329.621};
       tone(soundPin,noty[i]);
       soundDelay = 200;
     }
@@ -447,9 +449,9 @@ void DrawMenu() {
   displayImage(Nastaveni1, 4,4,2,-2,-2);
   displayImage(Galaxian, 4,4,0,-2,-2);
   displayImage(DancemanMenu, 4,4,3,-2,-2);
-  int whichIcon = 0x0;
-  int batteryValue = analogRead(battery);
-  float mapBattery = (batteryValue * 5.0) / 1024.0;
+  byte whichIcon = 0x0;
+  const int batteryValue = analogRead(battery);
+  const float mapBattery = (batteryValue * 5.0) / 1024.0;
   if (mapBattery >= 3.8) {
     whichIcon = 0x34;
   } else if (mapBattery < 3.8 and mapBattery >= 3.2) {
@@ -463,8 +465,8 @@ void DrawMenu() {
   }  
   u8g2.firstPage();
   do {
-    String out1 = String(mapBattery) + "V";
-    String out2 = "Ver. - " + versionUrxOS;
+    const String out1 = String(mapBattery) + "V";
+    const String out2 = "Ver. - " + versionUrxOS;
     u8g2.setFont(u8g2_font_battery24_tr);
     u8g2.drawGlyph(100,24,whichIcon);
     u8g2.setFont(u8g2_font_helvR12_tr);
@@ -482,16 +484,16 @@ void DrawMenu() {
 void Menu(bool firstGoThrough, bool go) {
   //When menu start show M in start
   if (firstGoThrough==true) {
-    float noty[] = {61.735,261.625,261.625,293.664,329.627};
+    const float noty[] = {61.735,261.625,261.625,293.664,329.627};
     whichIconShowed = 0;
     //Clearing all displays
     for (int index = 0; index < 4; index++) {
       lc.clearDisplay(index);
     }
     for (int i = 0; i < 7; i++){
-      int nazev[] = {HolTyc1,HolTyc2,HolTyc3,HolTyc4,HolTyc5,HolTyc6,HolTyc7};
+      const word* nazev[] = {HolTyc1,HolTyc2,HolTyc3,HolTyc4,HolTyc5,HolTyc6,HolTyc7};
       displayImage(nazev[i]);
-      if (i>=1 and i <=6) {
+      if ((i>=1 and i <=6) and soundState==true) {
         tone(soundPin, noty[i-1]);
       }
       delay(100);
@@ -621,10 +623,10 @@ void Snake() {
   allTime = millis();
   //Movement: left....x = 1, right....x = -1, forward....y = 1, down....y = -1. 
   if ((x==0 and y==0) and startingLedOn==true) {
-    ShowText(pY,pX,1);
+    displayLed(pY,pX,1);
     //Serial.print()
   } else if (startingLedOn==true) {
-    ShowText(pY,pX,0);
+    displayLed(pY,pX,0);
     startingLedOn=false;
   }
   if (activatorV == 1 and (x!=0 or y!=0)) {
@@ -653,7 +655,7 @@ void Snake() {
   }
   if (activatorV == 0) {
     // Smart blinking food led 
-    ShowText(foodY,foodX,millis() % 1000 < 500 ? 1 : 0);
+    displayLed(foodY,foodX,millis() % 1000 < 500 ? 1 : 0);
     // This will run every delayTime
     if (allTime - lastTime >= delayTime) {
       //sY=y;
@@ -685,10 +687,10 @@ void Snake() {
               Array[row][col]--;
               //If This pixel is zero (I know that zero means that it is snake ending) turn pixel off
               if (Array[row][col]==0) {
-                ShowText(row,col,0);
+                displayLed(row,col,0);
               //If pixel is the biggest turn pixel on
               } else if (Array[row][col]==bodyLength) {
-                ShowText(row,col,1);
+                displayLed(row,col,1);
               }
             }
           }
@@ -739,7 +741,7 @@ void GalaxianGame() {
   } else if (activatorV==0) {
     for (int row = 0; row < 3; row++) {
       for (int col = 0; col < 2; col++) {
-        //ShowText(row+pY,col,bitRead(pgm_read_byte(&(ship[row][1-col])),col-1-col); 
+        displayLed(row+pY,col,pgm_read_byte(&(ship[row][col]))); 
       }
     }
     u8g2.firstPage();
@@ -760,7 +762,7 @@ void GalaxianGame() {
       Warp();
       for (int row = 0; row < 3; row++) {
         for (int col = 0; col < 2; col++) {
-          //Array[row+pY][col] = pgm_read_byte(&(ship[row][col])) + 1; 
+          Array[row+pY][col] = pgm_read_byte(&(ship[row][col])) + 1; 
         }
       }
       if (active==1) {
@@ -774,7 +776,7 @@ void GalaxianGame() {
           if (Array[row][col] > 0) {
             Array[row][col]--;
             if (Array[row][col]==0) {
-              ShowText(row,col,0);
+              displayLed(row,col,0);
             } else if (Array[row][col]==1) {
               int er = 0;
               for (int i = 0; i < prucho*2; i++) {
@@ -782,16 +784,16 @@ void GalaxianGame() {
                   if (row==EnemysG[i] and col==EnemysG[i+1]) {
                     er = 1;
                     PlaySound(5,0);
-                    ShowText(EnemysG[i],EnemysG[i+1],0);
-                    ShowText(EnemysG[i],EnemysG[i+1]+1,0);
+                    displayLed(EnemysG[i],EnemysG[i+1],0);
+                    displayLed(EnemysG[i],EnemysG[i+1]+1,0);
                     EnemysG[i]=-EnemysG[i];
-                    ShowText(row,col,0);
+                    displayLed(row,col,0);
                     if (EnemyDouble[i]>1 and EnemysG[i]!=abs(EnemysG[i])) {
                       EnemysG[i]=-EnemysG[i];
                       EnemyDouble[i]-=1;
                       EnemysG[i+1]=EnemysG[i+1]-1;
-                      ShowText(EnemysG[i],EnemysG[i+1]+2,0);
-                      ShowText(EnemysG[i],EnemysG[i+1]+1,1);
+                      displayLed(EnemysG[i],EnemysG[i+1]+2,0);
+                      displayLed(EnemysG[i],EnemysG[i+1]+1,1);
                     } else if ((EnemysG[i]!=17 and EnemysG[i+1]!=17) and EnemysG[i]!=abs(EnemysG[i])) {
                       wave+=1;
                       points+=1;
@@ -815,7 +817,7 @@ void GalaxianGame() {
                 }
               } 
               if (er!=1) {
-                ShowText(row,col,1);
+                displayLed(row,col,1);
               }
             }
           }
@@ -855,13 +857,13 @@ void GalaxianGame() {
           }
           */
           if (EnemysG[i]!=17 and EnemysG[i+1]!=17) {
-            ShowText(EnemysG[i],EnemysG[i+1]+1,0);
+            displayLed(EnemysG[i],EnemysG[i+1]+1,0);
             if (EnemyDouble[i]>1) {
               for (int j = 1; j < EnemyDouble[i]; j++) {
-                ShowText(EnemysG[i],EnemysG[i+1]-j,1);
+                displayLed(EnemysG[i],EnemysG[i+1]-j,1);
               }
             }
-            ShowText(EnemysG[i],EnemysG[i+1],1);
+            displayLed(EnemysG[i],EnemysG[i+1],1);
             EnemysG[i+1]--;
           }
           if (EnemysG[i+1]<=1) {
