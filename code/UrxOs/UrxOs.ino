@@ -37,7 +37,7 @@ void Loop() - Runs every 1/100s or every 10 ms
 /****************************************************************/
 
 //Food position variables
-String versionUrxOS = "0.6.1";
+String versionUrxOS = "0.7.0";
 int foodX = 0;
 int foodY = 0;
 //Delay in game is overrided when function SettingGameSnake is called
@@ -75,6 +75,7 @@ const int allLedTurnOff = 0b00000000;
 const int addressSound = 1;
 const int addressSnake1 = 2;
 const int addressSnake2 = 3;
+const int addressIntensity = 4;
 const int addressGalaxian1 = 7;
 const int addressGalaxian2 = 8;
 //Movement variables
@@ -96,6 +97,7 @@ int wave = 0;
 int computer = 0;
 int points = 50;
 int prucho = 0;
+int intensity = 0;
 byte congrats = 0;
 bool congratsState = true;
 bool soundState = true;
@@ -105,25 +107,12 @@ bool startingLedOn = true;
 bool load = true;
 bool lastState = true;
 
-void displayOled(char writing [] = "Zdar,b") {
-  u8g2.firstPage();
-  do {
-    char *d = strtok(writing,",");
-    u8g2.setFont(u8g2_font_helvR12_tr);
-    u8g2.setCursor(0, 13);
-    u8g2.print(d);
-    d = strtok(NULL, ",");
-    u8g2.setCursor(0,28);
-    u8g2.print(d);
-  } while ( u8g2.nextPage() );
-}
 /****************************************************************/
 //Setup function
 /****************************************************************/
 void setup() {
   //Defining variables
   u8g2.begin();
-  displayOled();
   //u8x8.refreshDisplay();    // only required for SSD1606/7  
   Serial.begin(9600);
   //Serial.print(EEPROM.read(addressSnake1));
@@ -146,9 +135,11 @@ void setup() {
   pinMode(soundPin, OUTPUT);
   pinMode(LED_BUILTIN,OUTPUT);
   // Erasing and inicializing all displays
+  intensity = EEPROM.read(addressIntensity);
+  Serial.print(intensity);
   for (int index = 0; index < 4; index++) {
     lc.shutdown(index, false);
-    lc.setIntensity(index, 0);
+    lc.setIntensity(index, intensity);
     lc.clearDisplay(index);
   }
   // Making random random
@@ -171,25 +162,6 @@ void blink() { //Function for all buttons it is called with interupts so that me
 /****************************************************************/
 //Helping functions
 /****************************************************************/
-//This function is like TurningLedArray but has changed display orientation
-void displayImage(const word* image, int displaySizeX=8, int displaySizeY=0, int display=0, int offsetX=0, int offsetY=0) {
-  int MirrorX = displaySizeX-1;
-  int MirrorY = displaySizeY-1;
-  for (int index = 0; index < 2; index++) {
-    for (int rows = 0; rows < displaySizeX; rows++) {
-      if (displaySizeX == 8 and displaySizeY==0) {
-        byte byte1 = (pgm_read_word(&image[(rows) + (index*displaySizeX)]) >> displaySizeX) & 0xFF;
-        byte byte2 = pgm_read_word(&image[(rows) + (index*displaySizeX)]) & 0xFF;
-        lc.setRow(index + 1 + index, MirrorX-rows, byte1);
-        lc.setRow(index + index, MirrorX-rows, byte2);
-      } else {
-        for (int cols = 0; cols < displaySizeY; cols++) {
-          lc.setLed(display, MirrorX-rows - offsetX, MirrorY-cols - offsetY, bitRead(pgm_read_word(&image[rows]), cols));
-        }
-      }
-    }
-  }
-}
 void SettingGameSnake() {
   allTime = millis();
   lastTime=allTime;
@@ -264,17 +236,6 @@ void SettingGameGalaxian() {
     u8g2.print(out2);
   } while ( u8g2.nextPage() );
 }
-void SettingSetting(){
-  for (int index = 0; index < 4; index++) {
-    lc.clearDisplay(index);
-  }
-  displayImage(SnakeMenu, 4,4,1,-2,-2);
-  displayImage(Intensity, 4,4,2,-2,-2);
-  displayImage(HighScore, 4,4,0,-2,-2);
-  activatorV = 0;
-  whichIconShowed = 0;
-  gameState = 5;
-}
 //Making snake go through walls
 void Warp() {
   pX < 0 ? pX += 16 : 0;
@@ -294,16 +255,35 @@ void ShowBorders(int display) {
   lc.setColumn(display,7,allLedTurnOn);
   lc.setColumn(display,0,allLedTurnOn);
 }
-void displayLed(int row,int col, int state) {
-if (row < 8 and col < 8) {
-  lc.setLed(1, 7-col, row, state);
-} else if (row < 8 and col >= 8) {
-  lc.setLed(3, 7-col%8, row, state);
-} else if (row >= 8 and col < 8) {
-  lc.setLed(0, 7-col, row%8, state);
-} else if (row >= 8 and col >= 8) {
-  lc.setLed(2, 7-col%8, row%8, state);
+//This function is like TurningLedArray but has changed display orientation
+void displayImage(const word* image, int displaySizeX=8, int displaySizeY=0, int display=0, int offsetX=0, int offsetY=0) {
+  int MirrorX = displaySizeX-1;
+  int MirrorY = displaySizeY-1;
+  for (int index = 0; index < 2; index++) {
+    for (int rows = 0; rows < displaySizeX; rows++) {
+      if (displaySizeX == 8 and displaySizeY==0) {
+        byte byte1 = (pgm_read_word(&image[(rows) + (index*displaySizeX)]) >> displaySizeX) & 0xFF;
+        byte byte2 = pgm_read_word(&image[(rows) + (index*displaySizeX)]) & 0xFF;
+        lc.setRow(index + 1 + index, MirrorX-rows, byte1);
+        lc.setRow(index + index, MirrorX-rows, byte2);
+      } else {
+        for (int cols = 0; cols < displaySizeY; cols++) {
+          lc.setLed(display, MirrorX-rows - offsetX, MirrorY-cols - offsetY, bitRead(pgm_read_word(&image[rows]), cols));
+        }
+      }
+    }
+  }
 }
+void displayLed(int row,int col, int state) {
+  if (row < 8 and col < 8) {
+    lc.setLed(1, 7-col, row, state);
+  } else if (row < 8 and col >= 8) {
+    lc.setLed(3, 7-col%8, row, state);
+  } else if (row >= 8 and col < 8) {
+    lc.setLed(0, 7-col, row%8, state);
+  } else if (row >= 8 and col >= 8) {
+    lc.setLed(2, 7-col%8, row%8, state);
+  }
 }
 void displayNumbers(int number) {
   String gameScore = String(number);
@@ -315,6 +295,25 @@ void displayNumbers(int number) {
       displayImage(nazev[gameScore[i] - '0'], 4, 7, 0, -4+(i*4), -1);
     }
   }
+}
+void displayOled(String writing = "" , int number=-1) {
+  u8g2.firstPage();
+  do {
+    int index = writing.lastIndexOf('\n');
+    int length = writing.length();
+    String first = writing.substring(0, index);
+    u8g2.setFont(u8g2_font_helvR12_tr);
+    u8g2.setCursor(0, 13);
+    u8g2.print(first);
+    if (number!=-1) {
+      u8g2.print(number);  
+    }
+    u8g2.setCursor(0,28);
+    index = writing.lastIndexOf('\n');
+    length = writing.length();
+    String second = writing.substring(index, length);
+    u8g2.print(second);
+  } while ( u8g2.nextPage() );
 }
 void GenerateFood() {
   while (true) {
@@ -386,14 +385,14 @@ void IsButtonPressed() {
       if (points>0) {
         displayImage(Nastaveni1, 4,4,2,-2,-2);
       if (points==1) {
-        points=-50;
+        points=-40;
       } else {
         points--;
       }
       } else {
         displayImage(Nastaveni2, 4,4,2,-2,-2);
         if (points==0) {
-        points=50;
+        points=40;
       } else {
         points++;
       }
@@ -495,6 +494,21 @@ void DrawMenu() {
     u8g2.setCursor(0, 28);
     u8g2.print(out2);
   } while ( u8g2.nextPage() );
+}
+void SettingSetting(){
+  for (int index = 0; index < 4; index++) {
+    lc.clearDisplay(index);
+  }
+  if (soundState==true) {
+    displayImage(Sound_on, 6, 6, 3, -1, -1);
+  } else if (soundState==false) {
+    displayImage(Sound_off, 6, 6, 3, -1, -1);
+  }
+  displayImage(Intensity, 4,4,2,-2,-2);
+  displayImage(HighScore, 4,4,0,-2,-2);
+  activatorV = 0;
+  whichIconShowed = 0;
+  gameState = 5;
 }
 /****************************************************************/
 //Gamestate functions
@@ -889,21 +903,40 @@ void DanceMan() {
   
 }
 void InfoFun() {
+  const word* nazev[] = {Low,Medium,High};
+  if (intensity==13) {
+    displayImage(nazev[2]);
+  } else if (intensity==5) {
+    displayImage(nazev[1]);
+  } else if (intensity==0) {
+    displayImage(nazev[0]);
+  } 
+  IsButtonPressed();
+  if (active==-1) {
+    gameState=0;
+    DrawMenu();
+  }
+  if (x==-1 or y==1) {
+    if (intensity==13) {
+      intensity=0;
+    } else if (intensity==5) {
+      intensity=13;
+    } else if (intensity==0) {
+      intensity=5;
+    } 
+  } else if (x==1 or y==-1) {
+    if (intensity==13) {
+      intensity=5;
+    } else if (intensity==5) {
+      intensity=0;
+    } else if (intensity==0) {
+      intensity=13;
+    } 
+  }
+  EEPROM.write(addressIntensity, intensity);
   for (int index = 0; index < 4; index++) {
-    lc.clearDisplay(index);
+    lc.setIntensity(index, EEPROM.read(addressIntensity));
   }
-  String out[9] = {"Miki toto je", "4 generace", "nasi konzole.", "Programoval", "jsem ji na", "chalupe.", "UZIVEJ a dej", "vedet :)"};
-  for (int i = 0; i < 8; i++) {
-    u8g2.firstPage();
-    do {
-      u8g2.setFont(u8g2_font_helvR12_tr);
-      u8g2.setCursor(0, 13);
-      u8g2.print(out[i]);
-    } while ( u8g2.nextPage() );
-    ActiveButton();
-    delay(200);
-  }
-  gameState=0;
 }
 void NastaveniHer() {
   if (activatorV == 0) {
@@ -920,19 +953,16 @@ void NastaveniHer() {
     if (whichIconShowed!=0) {
       if (whichIconShowed==1) {
       whichIconShowed += (abs(x) + 1) * abs(x);
-      whichIconShowed += (abs(y)) * abs(y);
-    } else if (whichIconShowed==2) {
-      whichIconShowed += (abs(x) + 1) * abs(x);
-      whichIconShowed -= (abs(y)) * abs(y);
+      //whichIconShowed += (abs(y)) * abs(y);
     } else if (whichIconShowed==3) {
       whichIconShowed -= (abs(x) + 1) * abs(x);
       whichIconShowed += (abs(y)) * abs(y);
     } else if (whichIconShowed==4) {
-      whichIconShowed -= (abs(x) + 1) * abs(x);
+      //whichIconShowed -= (abs(x) + 1) * abs(x);
       whichIconShowed -= (abs(y)) * abs(y);
     }
     } else if (whichIconShowed==0 and active==0) {
-      whichIconShowed=2;
+      whichIconShowed=1;
     }
     ShowBorders(whichIconShowed-1);
     if (active==1 and whichIconShowed!=0) {
@@ -947,7 +977,7 @@ void NastaveniHer() {
             lc.clearDisplay(index);
           }
       }
-      if (whichIconShowed==2) {
+      if (whichIconShowed==3) {
           gameState=4;
       } else if (whichIconShowed==1) {
           activatorV = 1;
@@ -977,13 +1007,14 @@ void NastaveniHer() {
     }
     if (whichIconShowed==0) {
       if (whichMedal==0) {
-        ShowBorders(0);
+        ShowBorders(0); 
       }
       if (x==-1) {
         whichMedal = 3;
       } else if (x==1) {
         whichMedal = 0;
         ShowBorders(0);
+        displayOled();
       }
       if (whichMedal==3) {
         whichMedal += abs(y) * -1;
@@ -992,9 +1023,11 @@ void NastaveniHer() {
       }
       if (whichMedal==3) {
         ShowBorders(3);
+        displayOled("Score: ", EEPROM.read(addressGalaxian1));
         
       } else if (whichMedal==2) {
         ShowBorders(2);
+        displayOled("Score: ", EEPROM.read(addressGalaxian2));
       }
       /*
       for (int row = 0; row < 8; row++) {
@@ -1015,6 +1048,7 @@ void NastaveniHer() {
       } else if (x==1) {
         whichMedal = 0;
         ShowBorders(1);
+        displayOled();
       }
       if (whichMedal==3) {
         whichMedal += abs(y) * -1;
@@ -1023,13 +1057,15 @@ void NastaveniHer() {
       }
       if (whichMedal==3) {
         ShowBorders(3);
+        displayOled("Score: ", EEPROM.read(addressSnake1));
         
       } else if (whichMedal==2) {
         ShowBorders(2);
+        displayOled("Score: ", EEPROM.read(addressSnake2));
       }
     }
+    IsButtonPressed();
   }
-  IsButtonPressed();
   delay(10);
 }
 /****************************************************************/
