@@ -76,6 +76,8 @@ const int addressSound = 1;
 const int addressSnake1 = 2;
 const int addressSnake2 = 3;
 const int addressIntensity = 4;
+const int addressDanceMan1 = 5;
+const int addressDanceMan2 = 6;
 const int addressGalaxian1 = 7;
 const int addressGalaxian2 = 8;
 //Movement variables
@@ -162,87 +164,6 @@ void blink() { //Function for all buttons it is called with interupts so that me
 /****************************************************************/
 //Helping functions
 /****************************************************************/
-void SettingGameSnake() {
-  allTime = millis();
-  lastTime=allTime;
-  opravaPohybu = 0;
-  delayTime = delayTimeConst;
-  bodyLength = bodyLengthConst;
-  activatorV = 0;
-  startingLedOn = true;
-  congrats=0;
-  pX = 0;
-  pY = 15;
-  x = 0;
-  y = 0;
-  sX=0;
-  sY=0;
-  active=0;
-  for (int row = 0; row < 16; row++) {
-    for (int col = 0; col < 16; col++) {
-      Array[row][col] = 0;
-    }
-  }
-  for (int index = 0; index < 4; index++) {
-    lc.clearDisplay(index);
-  }
-  u8g2.firstPage();
-  do {
-    //u8g2.setFont(u8g2_font_helvR14_tr);
-    //u8g2.drawStr(0,15,"Hello Wold!");
-    //u8g2.drawStr(0,30,"12345E7890!");
-    String out1 = "Your Score: " + String(bodyLength-3);
-    String out2 = "High Score: " + String(EEPROM.read(addressSnake1));
-    u8g2.setFont(u8g2_font_helvR12_tr);
-    u8g2.setCursor(0, 13);
-    u8g2.print(out1);
-    u8g2.setCursor(0,28);
-    u8g2.print(out2);
-  } while ( u8g2.nextPage() );
-}
-void SettingGameGalaxian() {
-  for (int index = 0; index < 4; index++) {
-    lc.clearDisplay(index);
-  }
-  allTime = millis();
-  lastTime=allTime;
-  lastTime2=allTime;
-  pY=13;
-  delayTime=750;
-  moveEnemy1=0;
-  wave=0;
-  points=0;
-  activatorV=0;
-  prucho = 0;
-  for (int i = 0; i < 100; i++) {
-    EnemysG[i]=0;
-    if (i <= 50) {
-      EnemyDouble[i]=0;
-    }
-  }
-  for (int row = 0; row < 16; row++) {
-    for (int col = 0; col < 16; col++) {
-      Array[row][col] = 0;
-    }
-  }
-  u8g2.firstPage();
-  do {
-    String out1 = "Your Score: " + String(points);
-    String out2 = "High Score: " + String(EEPROM.read(addressGalaxian1));
-    u8g2.setFont(u8g2_font_helvR12_tr);
-    u8g2.setCursor(0, 13);
-    u8g2.print(out1);
-    u8g2.setCursor(0,28);
-    u8g2.print(out2);
-  } while ( u8g2.nextPage() );
-}
-//Making snake go through walls
-void Warp() {
-  pX < 0 ? pX += 16 : 0;
-  pX > 15 ? pX -= 16 : 0;
-  pY < 0 ? pY += 16 : 0;
-  pY > 15 ? pY -= 16 : 0;
-}
 void ShowBorders(int display) {
   for (int i = 0; i<4;i++) {
     lc.setRow(i,0,allLedTurnOff);
@@ -296,7 +217,7 @@ void displayNumbers(int number) {
     }
   }
 }
-void displayOled(String writing = "" , int number=-1) {
+void displayOled(String writing = "") {
   u8g2.firstPage();
   do {
     int index = writing.lastIndexOf('\n');
@@ -305,15 +226,17 @@ void displayOled(String writing = "" , int number=-1) {
     u8g2.setFont(u8g2_font_helvR12_tr);
     u8g2.setCursor(0, 13);
     u8g2.print(first);
-    if (number!=-1) {
-      u8g2.print(number);  
-    }
     u8g2.setCursor(0,28);
     index = writing.lastIndexOf('\n');
     length = writing.length();
     String second = writing.substring(index, length);
     u8g2.print(second);
   } while ( u8g2.nextPage() );
+}
+void displayClear() {
+  for (int index = 0; index < 4; index++) {
+    lc.clearDisplay(index);
+  }
 }
 void GenerateFood() {
   while (true) {
@@ -461,9 +384,7 @@ int read2EEPROM(int address) {
   return result;
 }
 void DrawMenu() {
-  for (int index = 0; index < 4; index++) {
-    lc.clearDisplay(index);
-  }
+  displayClear();
   displayImage(SnakeMenu, 4,4,1,-2,-2);
   displayImage(Nastaveni1, 4,4,2,-2,-2);
   displayImage(Galaxian, 4,4,0,-2,-2);
@@ -496,9 +417,7 @@ void DrawMenu() {
   } while ( u8g2.nextPage() );
 }
 void SettingSetting(){
-  for (int index = 0; index < 4; index++) {
-    lc.clearDisplay(index);
-  }
+  displayClear();
   if (soundState==true) {
     displayImage(Sound_on, 6, 6, 3, -1, -1);
   } else if (soundState==false) {
@@ -508,7 +427,73 @@ void SettingSetting(){
   displayImage(HighScore, 4,4,0,-2,-2);
   activatorV = 0;
   whichIconShowed = 0;
-  gameState = 5;
+}
+void SettingGameSnake() {
+  allTime = millis();
+  lastTime=allTime;
+  opravaPohybu = 0;
+  delayTime = delayTimeConst;
+  bodyLength = bodyLengthConst;
+  activatorV = 0;
+  startingLedOn = true;
+  congrats=0;
+  pX = 0;
+  pY = 15;
+  x = 0;
+  y = 0;
+  sX=0;
+  sY=0;
+  active=0;
+  for (int row = 0; row < 16; row++) {
+    for (int col = 0; col < 16; col++) {
+      Array[row][col] = 0;
+    }
+  }
+  displayClear();
+  displayOled("Your Score: " + String(bodyLength-3) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
+}
+void SettingGameGalaxian() {
+  displayClear();
+  allTime = millis();
+  lastTime=allTime;
+  lastTime2=allTime;
+  pY=13;
+  delayTime=750;
+  moveEnemy1=0;
+  wave=0;
+  points=0;
+  activatorV=0;
+  prucho = 0;
+  for (int i = 0; i < 100; i++) {
+    EnemysG[i]=0;
+    if (i <= 50) {
+      EnemyDouble[i]=0;
+    }
+  }
+  for (int row = 0; row < 16; row++) {
+    for (int col = 0; col < 16; col++) {
+      Array[row][col] = 0;
+    }
+  }
+  displayOled("Your Score: " + String(points) + "\nHigh Score: " + String(EEPROM.read(addressGalaxian1)));
+}
+void SettingGameDanceMan() {
+  displayClear();
+  points=0;
+  prucho = 0;
+  wave=0;
+  sX=0; // Counting time when pressed
+  sY=0; // Direction variable
+  activatorV=0;
+  lastTime=millis();
+  displayOled("\nAll Points: " + String(points));
+}
+//Making snake go through walls
+void Warp() {
+  pX < 0 ? pX += 16 : 0;
+  pX > 15 ? pX -= 16 : 0;
+  pY < 0 ? pY += 16 : 0;
+  pY > 15 ? pY -= 16 : 0;
 }
 /****************************************************************/
 //Gamestate functions
@@ -521,9 +506,7 @@ void Menu(bool firstGoThrough, bool go) {
     const float noty[] = {61.735,261.625,261.625,293.664,329.627};
     whichIconShowed = 0;
     //Clearing all displays
-    for (int index = 0; index < 4; index++) {
-      lc.clearDisplay(index);
-    }
+    displayClear();
     for (int i = 0; i < 7; i++){
       const word* nazev[] = {HolTyc1,HolTyc2,HolTyc3,HolTyc4,HolTyc5,HolTyc6,HolTyc7};
       displayImage(nazev[i]);
@@ -588,8 +571,10 @@ void Menu(bool firstGoThrough, bool go) {
     } else if (whichIconShowed==3) {
       //Showing menu text N - nastaveni
       SettingSetting();
+      gameState = 5;
     } else if (whichIconShowed==4) {
-      //Showing menu text I - Space Invators
+      //Showing menu text D - Dance Man
+      SettingGameDanceMan();
       gameState = 3;
     }
   }
@@ -597,17 +582,15 @@ void Menu(bool firstGoThrough, bool go) {
 }
 
 //GameOver function
-void GameOver(int score, int game) {
+void GameOver(int score=0, int game = -1) {
   //Changing gameState for gameOver state
   noTone(soundPin);
   soundDelay = 0;
   gameState = 1;
   menuFirstWalkThrough = false;
   //Clearing all displays
-  for (int index = 0; index < 4; index++) {
-    lc.clearDisplay(index);
-  }
-  if (game==1 or game==2 or game==4) {
+  displayClear();
+  if (game==1 or game==2 or game==4 or game==-1) {
     //Showing text Game over
     displayImage(GameOverMessage);
   } else if (game==3) {
@@ -631,13 +614,13 @@ void GameOver(int score, int game) {
   }
   ActiveButton();
   //Clearing all displays
-  for (int index = 0; index < 4; index++) {
-    lc.clearDisplay(index);
-  }
+  displayClear();
   //Showing text score
-  displayImage(Score);
-  displayNumbers(score);
-  ActiveButton();
+  if (game!=-1) {
+    displayImage(Score);
+    displayNumbers(score);
+    ActiveButton();
+  }
   goThrough=true;
   gameState=0;
 }
@@ -732,16 +715,7 @@ void Snake() {
           foodX=-1;
           foodY=-1;
           GenerateFood();
-          u8g2.firstPage();
-          do {
-            String out1 = "Your Score: " + String(bodyLength-3);
-            String out2 = "High Score: " + String(EEPROM.read(addressSnake1));
-            u8g2.setFont(u8g2_font_helvR12_tr);
-            u8g2.setCursor(0, 13);
-            u8g2.print(out1);
-            u8g2.setCursor(0,28);
-            u8g2.print(out2);
-          } while ( u8g2.nextPage() );
+          displayOled("Your Score: " + String(bodyLength-2) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
         }
         //Resetting timer
         lastTime = allTime;
@@ -759,25 +733,13 @@ void GalaxianGame() {
   }
   if (y!=0 and activatorV==0) {
     activatorV=1;
-    for (int index = 0; index < 4; index++) {
-      lc.clearDisplay(index);
-    }
+    displayLed(15,0,0);
   } else if (activatorV==0) {
     for (int row = 0; row < 3; row++) {
       for (int col = 0; col < 2; col++) {
         displayLed(row+pY,col,pgm_read_byte(&(ship[row][col]))); 
       }
     }
-    u8g2.firstPage();
-    do {
-      String out1 = "Your Score: " + String(points);
-      String out2 = "High Score: " + String(EEPROM.read(addressGalaxian1));
-      u8g2.setFont(u8g2_font_helvR12_tr);
-      u8g2.setCursor(0, 13);
-      u8g2.print(out1);
-      u8g2.setCursor(0,28);
-      u8g2.print(out2);
-    } while ( u8g2.nextPage() );
   }
   if (activatorV==1) {
     if (allTime-lastTime>=200) {
@@ -821,16 +783,7 @@ void GalaxianGame() {
                     } else if ((EnemysG[i]!=17 and EnemysG[i+1]!=17) and EnemysG[i]!=abs(EnemysG[i])) {
                       wave+=1;
                       points+=1;
-                      u8g2.firstPage();
-                      do {
-                        String out1 = "Your Score: " + String(points);
-                        String out2 = "High Score: " + String(EEPROM.read(addressGalaxian1));
-                        u8g2.setFont(u8g2_font_helvR12_tr);
-                        u8g2.setCursor(0, 13);
-                        u8g2.print(out1);
-                        u8g2.setCursor(0,28);
-                        u8g2.print(out2);
-                      } while ( u8g2.nextPage() );
+                      displayOled("Your Score: " + String(points) + "\nHigh Score: " + String(EEPROM.read(addressGalaxian1)));
                       EnemysG[i+1]=17;
                       EnemysG[i]=17;
                     }
@@ -856,30 +809,6 @@ void GalaxianGame() {
       }
       for (int i = 0; i < prucho*2; i++) {
         if (i%2==0) {
-          /*
-          if (EnemysG[i]!=abs(EnemysG[i])) {
-            if (EnemyDouble[i]>1) {
-              EnemysG[i]=-EnemysG[i];
-              EnemyDouble[i]-=1;
-              EnemysG[i+1]=EnemysG[i+1]-1;
-            } else if (EnemysG[i]!=17 and EnemysG[i+1]!=17) {
-              wave+=1;
-              points+=1;
-              u8g2.firstPage();
-              do {
-                String out1 = "Your Score: " + String(points);
-                String out2 = "High Score: " + String(EEPROM.read(addressGalaxian1));
-                u8g2.setFont(u8g2_font_helvR12_tr);
-                u8g2.setCursor(0, 13);
-                u8g2.print(out1);
-                u8g2.setCursor(0,28);
-                u8g2.print(out2);
-              } while ( u8g2.nextPage() );
-              EnemysG[i+1]=17;
-              EnemysG[i]=17;
-            }
-          }
-          */
           if (EnemysG[i]!=17 and EnemysG[i+1]!=17) {
             displayLed(EnemysG[i],EnemysG[i+1]+1,0);
             if (EnemyDouble[i]>1) {
@@ -900,7 +829,70 @@ void GalaxianGame() {
   }
 }
 void DanceMan() {
-  
+  allTime = millis();
+  if (active==1) {
+    activatorV=1;
+  } else if (active==-1) {
+    GameOver();
+  }
+  if (activatorV==1) {
+    if (prucho==0) {
+      sY=random(0,4);
+      const word* nazev[] = {ArrowUp,ArrowRight,ArrowDown,ArrowLeft};
+      displayImage(nazev[sY]);
+      sX=170;
+      prucho=-1;
+      x=0;
+      y=0;
+    } else if (prucho==-1) {
+      bool hit = false;
+      if (x==1 and sY==3) {
+        prucho = random(10,80);
+        hit = true;
+      } else if (x==-1 and sY==1) {
+        prucho = random(10,80);
+        hit = true;
+      } else if (y==1 and sY==0) {
+        prucho = random(10,80);
+        hit = true;
+      } else if (y==-1 and sY==2) {
+        hit = true;
+      } else if (x==1 or x==-1 or y==1 or y==-1) {
+        prucho = random(10,80);
+        sX=0;
+        GameOver(0,2);
+        //points-=200;
+        //displayClear();
+        //displayOled("Bad arrow: " + String(-200) + "\nAll Points: " + String(points));
+      }
+      if (hit==true) {
+        displayClear();
+        prucho = random(10,80);
+        points+=sX;
+        if (sX<=170 and sX>150) {
+          points+=50;
+          displayOled("Perfect: " + String(sX) + "\nAll Points: " + String(points));
+        } else if (sX<=150 and sX>120) {
+          displayOled("Super: " + String(sX) + "\nAll Points: " + String(points));
+        } else if (sX<=120 and sX>70) {
+          displayOled("Good: " + String(sX) + "\nAll Points: " + String(points));
+        } else if (sX<=70 and sX>40) {
+          displayOled("Ok: " + String(sX) + "\nAll Points: " + String(points));
+        } else if (sX<=40) {
+          displayOled("Bad: " + String(sX) + "\nAll Points: " + String(points));
+        }
+      }
+    }
+    if (sX!=0) {
+      sX--;
+    }
+    if (prucho!=0 and prucho!=-1) { 
+      prucho--;
+    }
+  } else {
+    displayImage(PushA);
+  }
+  delay(10);
 }
 void InfoFun() {
   const word* nazev[] = {Low,Medium,High};
@@ -973,9 +965,7 @@ void NastaveniHer() {
           delay(100);
           noTone(soundPin);
         }
-        for (int index = 0; index < 4; index++) {
-            lc.clearDisplay(index);
-          }
+        displayClear();
       }
       if (whichIconShowed==3) {
           gameState=4;
@@ -1023,11 +1013,11 @@ void NastaveniHer() {
       }
       if (whichMedal==3) {
         ShowBorders(3);
-        displayOled("Score: ", EEPROM.read(addressGalaxian1));
+        displayOled("Score: " + String(EEPROM.read(addressGalaxian1)));
         
       } else if (whichMedal==2) {
         ShowBorders(2);
-        displayOled("Score: ", EEPROM.read(addressGalaxian2));
+        displayOled("Score: " + String(EEPROM.read(addressGalaxian2)));
       }
       /*
       for (int row = 0; row < 8; row++) {
@@ -1057,11 +1047,11 @@ void NastaveniHer() {
       }
       if (whichMedal==3) {
         ShowBorders(3);
-        displayOled("Score: ", EEPROM.read(addressSnake1));
+        displayOled("Score: " + String(EEPROM.read(addressSnake1)));
         
       } else if (whichMedal==2) {
         ShowBorders(2);
-        displayOled("Score: ", EEPROM.read(addressSnake2));
+        displayOled("Score: " + String(EEPROM.read(addressSnake2)));
       }
     }
     IsButtonPressed();
