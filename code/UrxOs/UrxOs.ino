@@ -37,7 +37,7 @@ void Loop() - Runs every 1/100s or every 10 ms
 /****************************************************************/
 
 //Food position variables
-String versionUrxOS = "0.7.9";
+String versionUrxOS = "0.7.91";
 int foodX = 0;
 int foodY = 0;
 //Delay in game is overrided when function SettingGameSnake is called
@@ -665,7 +665,7 @@ void Snake() {
     x=0;
     noTone(soundPin);
   }
-  if (((bodyLength-3) > EEPROM.read(addressSnake1) and congratsState==true) and congrats <= 3) {
+  if (((bodyLength-3) >= EEPROM.read(addressSnake1) and congratsState==true) and congrats <= 3) {
     PlaySound(9,congrats);
     congratsState=false;
   }
@@ -1163,7 +1163,14 @@ void loop() {
     if (soundDelay == 9 and noteCounter==0) {
       tone (soundPin, 97);
       soundDelay = 7;
-    }else {
+    } else if (soundDelay == 200 and noteCounter==0) {
+        if (congrats > 3) {
+          soundDelay=0;
+        } else {
+          congrats+=1;
+          congratsState=true;
+        }
+    } else {
       soundDelay=0;
     }
   }
