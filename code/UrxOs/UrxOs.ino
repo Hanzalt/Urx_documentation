@@ -137,6 +137,7 @@ void setup() {
   pinMode(soundPin, OUTPUT);
   pinMode(LED_BUILTIN,OUTPUT);
   // Erasing and inicializing all displays
+  // EEPROM.write(addressIntensity,0);
   intensity = EEPROM.read(addressIntensity);
   Serial.print(intensity);
   for (int index = 0; index < 4; index++) {
