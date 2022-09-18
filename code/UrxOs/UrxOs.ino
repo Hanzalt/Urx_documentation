@@ -1,9 +1,9 @@
 //(Snad posledni verze) Po druhym vyhorenim jsme se rozhodl udelat algoritmus smesi for cyklu(verze jedna) a smerem zapinani a zapinani(verze dva) JDU NA TO
 //OLED displey https://s.click.aliexpress.com/e/_APw28Y
 #include <Urx.h> 
-#include <EEPROM.h>
-#include <U8g2lib.h>
-#include <Wire.h>
+//#include <EEPROM.h>
+//#include <U8g2lib.h>
+//#include <Wire.h>
 U8G2_SH1106_128X32_VISIONOX_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE); 
 LedControl lc = LedControl(11, 12, 10, 4);
 Operator op();
@@ -37,7 +37,7 @@ void Loop() - Runs every 1/100s or every 10 ms
 /****************************************************************/
 
 //Food position variables
-String versionUrxOS = "0.7.91";
+String versionUrxOS = "0.7.92";
 int foodX = 0;
 int foodY = 0;
 //Delay in game is overrided when function SettingGameSnake is called
@@ -115,6 +115,7 @@ bool lastState = true;
 void setup() {
   //Defining variables
   u8g2.begin();
+  u8g2.setFlipMode(1);
   //u8x8.refreshDisplay();    // only required for SSD1606/7  
   Serial.begin(9600);
   //Serial.print(EEPROM.read(addressSnake1));
@@ -137,7 +138,7 @@ void setup() {
   pinMode(soundPin, OUTPUT);
   pinMode(LED_BUILTIN,OUTPUT);
   // Erasing and inicializing all displays
-  // EEPROM.write(addressIntensity,0);
+  //EEPROM.write(addressIntensity,0);
   intensity = EEPROM.read(addressIntensity);
   Serial.print(intensity);
   for (int index = 0; index < 4; index++) {
