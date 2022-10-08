@@ -1,4 +1,4 @@
-//(Snad posledni verze) Po druhym vyhorenim jsme se rozhodl udelat algoritmus smesi for cyklu(verze jedna) a smerem zapinani a zapinani(verze dva) JDU NA TO
+///(Snad posledni verze) Po druhym vyhorenim jsme se rozhodl udelat algoritmus smesi for cyklu(verze jedna) a smerem zapinani a zapinani(verze dva) JDU NA TO
 //OLED displey https://s.click.aliexpress.com/e/_APw28Y
 #include <Urx.h> 
 //#include <EEPROM.h>
@@ -37,7 +37,7 @@ void Loop() - Runs every 1/100s or every 10 ms
 /****************************************************************/
 
 //Food position variables
-String versionUrxOS = "0.7.92";
+String versionUrxOS = "0.7.93";
 int foodX = 0;
 int foodY = 0;
 //Delay in game is overrided when function SettingGameSnake is called
@@ -140,7 +140,6 @@ void setup() {
   // Erasing and inicializing all displays
   //EEPROM.write(addressIntensity,0);
   intensity = EEPROM.read(addressIntensity);
-  Serial.print(intensity);
   for (int index = 0; index < 4; index++) {
     lc.shutdown(index, false);
     lc.setIntensity(index, intensity);
@@ -848,7 +847,7 @@ int playSongDanceMan(String nameOfSong) {
     int timing [37] = {250, 250, 250, 250, 250, 250, 250, 500,125,125, 250, 500,250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 500,125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 500};
     if (notes[noteCounter]==0) {
       noTone(soundPin);
-    } else {
+    } else if (soundState==true) {
       tone(soundPin,notes[noteCounter]);
     }
     for (int i = 0; i < noteCounter+1; i++) {
@@ -879,7 +878,9 @@ int playSongDanceMan(String nameOfSong) {
     }
   } else if (nameOfSong=="Song1" and soundDelay==0 and noteCounter<=42) {
     int noty[42] = {147,247,220,196,165,330,294,262,156,233,220,196,139,233,220,196,147,247,220,196,165,330,294,262,156,233,220,196,139,233,220,196};
-    tone(soundPin,noty[noteCounter]);
+    if (soundState==true){
+      tone(soundPin,noty[noteCounter]);
+    }
     soundDelay = 200;
     noteCounter++;
     int ran = random(0,2);
@@ -909,13 +910,15 @@ void DanceMan() {
   if (activatorV==1) {
     if (prucho==0) {
       sY=random(0,4);
+      Serial.print("sY: ");
+      Serial.println(sY);
       const word* nazev[] = {ArrowUp,ArrowRight,ArrowDown,ArrowLeft};
       displayImage(nazev[sY]);
       sX=170;
       prucho=-1;
       x=0;
       y=0;
-    } else if (prucho==-1 and sX<=160) {
+    } else if (prucho==-1 and sX<=170) {
       bool hit = false;
       if (x==1 and sY==3) {
         hit = true;
@@ -925,9 +928,18 @@ void DanceMan() {
         hit = true;
       } else if (y==-1 and sY==2) {
         hit = true;
-      } else if (x==1 or x==-1 or y==1 or y==-1) {
+      } else if (sY==-2) {
+        Serial.println("Tohle je ta chyba");
+        hit= true;
+      }
+        else if (x==1 or x==-1 or y==1 or y==-1) {
         noTone(soundPin);
+        Serial.print("Smer sipky: ");
         Serial.println(sY);
+        Serial.print("y: ");
+        Serial.println(y);
+        Serial.print("x: ");
+        Serial.println(x);
         Serial.println("Utekl jsem pres tlacitka");
         GameOver();
         /*
@@ -960,9 +972,9 @@ void DanceMan() {
       lastTime=millis();
       sX--;
     }
-    if (wave==1 and prucho!=2) {
+    if (wave==1 and prucho!=2 and gameState==3) {
       prucho = playSongDanceMan("AmongUs");
-    } else if (wave==2 and prucho!=2) {
+    } else if (wave==2 and prucho!=2 and gameState==3) {
       prucho = playSongDanceMan("Song1");
     } else if (prucho==2 and active==1) {
       prucho=0;
