@@ -666,7 +666,7 @@ void Snake() {
     x=0;
     noTone(soundPin);
   }
-  if (((bodyLength-3) >= EEPROM.read(addressSnake1) and congratsState==true) and congrats <= 3) {
+  if (((bodyLength-4) >= EEPROM.read(addressSnake1) and congratsState==true) and congrats <= 3) {
     PlaySound(9,congrats);
     congratsState=false;
   }
@@ -725,7 +725,7 @@ void Snake() {
           foodX=-1;
           foodY=-1;
           GenerateFood();
-          displayOled("Your Score: " + String(bodyLength-2) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
+          displayOled("Your Score: " + String(bodyLength-3) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
         }
         //Resetting timer
         lastTime = allTime;
