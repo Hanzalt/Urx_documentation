@@ -91,8 +91,8 @@ volatile int sX = 0;
 volatile int sY = 0;
 //Variable for length of snake
 int bodyLength = 3;
-int opravaPohybu = 0;
-int opravaPohybuf = 0;
+//int opravaPohybu = 0;
+//int opravaPohybuf = 0;
 int activatorV = 0;
 int moveEnemy1 = 0;
 int wave = 0;
@@ -338,7 +338,6 @@ void ActiveButton() {
 void PlaySound(int sound, int i) {
   if (soundState==true) {
     if (sound == 1 and congratsState == true) {
-      opravaPohybuf+=1;
       tone(soundPin,70);
       soundDelay = 100;
     } else if (sound == 2) {
@@ -432,7 +431,6 @@ void SettingSetting(){
 void SettingGameSnake() {
   allTime = millis();
   lastTime=allTime;
-  opravaPohybu = 0;
   delayTime = delayTimeConst;
   bodyLength = bodyLengthConst;
   activatorV = 0;
