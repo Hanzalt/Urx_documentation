@@ -6,8 +6,6 @@
 //#include <Wire.h>
 U8G2_SH1106_128X32_VISIONOX_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE); 
 LedControl lc = LedControl(11, 12, 10, 4);
-Operator op();
-Images img();
 /*Structure 
 SETUP FAZE ------------------- 
 void Setup() - Runs on starting sketch
@@ -37,7 +35,7 @@ void Loop() - Runs every 1/100s or every 10 ms
 /****************************************************************/
 
 //Food position variables
-String versionUrxOS = "0.7.94";
+String versionUrxOS = "0.7.95";
 int foodX = 0;
 int foodY = 0;
 //Delay in game is overrided when function SettingGameSnake is called
@@ -80,15 +78,16 @@ const int addressGalaxian1 = 5;
 const int addressGalaxian2 = 6;
 const int addressDanceMan1 = 7;
 const int addressDanceMan2 = 9;
+const int addressDifficulty = 11;
 //Movement variables
 volatile int x = 0;
 volatile int y = 0;
 volatile int active = 0;
 //volatile bool change = false;
-int pX = 7;
-int pY = 7;
-volatile int sX = 0;
-volatile int sY = 0;
+int shiftedX = 7;
+int shiftedY = 7;
+volatile int allwaysX = 0;
+volatile int allwaysY = 0;
 //Variable for length of snake
 int bodyLength = 3;
 //int opravaPohybu = 0;
@@ -99,6 +98,7 @@ int wave = 0;
 int noteCounter = 0;
 int points = 50;
 int prucho = 0;
+int difficulty = 0;
 int intensity = 0;
 byte congrats = 0;
 bool congratsState = true;
@@ -469,17 +469,17 @@ void SettingSetting(){
 void SettingGameSnake() {
   allTime = millis();
   lastTime=allTime;
-  delayTime = delayTimeConst;
+  delayTime = delayTimeConst-difficulty;
   bodyLength = bodyLengthConst;
   activatorV = 0;
   startingLedOn = true;
   congrats=0;
-  pX = 0;
-  pY = 15;
+  shiftedX = 0;
+  shiftedY = 15;
   x = 0;
   y = 0;
-  sX=0;
-  sY=0;
+  allwaysX=0;
+  allwaysY=0;
   active=0;
   for (int row = 0; row < 16; row++) {
     for (int col = 0; col < 16; col++) {
@@ -494,8 +494,8 @@ void SettingGameGalaxian() {
   allTime = millis();
   lastTime=allTime;
   lastTime2=allTime;
-  pY=13;
-  delayTime=750;
+  shiftedY=13;
+  delayTime=750-difficulty;
   moveEnemy1=0;
   wave=0;
   points=0;
@@ -521,18 +521,18 @@ void SettingGameDanceMan() {
   wave=0; // What song to play
   noteCounter=0; // for playSongDanceMan counting which note to play
   soundDelay=0;
-  sX=0; // Counting time when pressed
-  sY=0; // Direction variable
+  allwaysX=0; // Counting time when pressed
+  allwaysY=0; // Direction variable
   activatorV=0; // Is game on?
   lastTime=millis();
   displayOled("\nAll Points: " + String(points));
 }
 //Making snake go through walls
 void Warp() {
-  pX < 0 ? pX += 16 : 0;
-  pX > 15 ? pX -= 16 : 0;
-  pY < 0 ? pY += 16 : 0;
-  pY > 15 ? pY -= 16 : 0;
+  shiftedX < 0 ? shiftedX += 16 : 0;
+  shiftedX > 15 ? shiftedX -= 16 : 0;
+  shiftedY < 0 ? shiftedY += 16 : 0;
+  shiftedY > 15 ? shiftedY -= 16 : 0;
 }
 /****************************************************************/
 //Gamestate functions
@@ -617,7 +617,7 @@ void Menu(bool firstGoThrough, bool go) {
       gameState = 3;
     }
   }
-  delay(10);
+  delay(200);
 }
 
 //GameOver function
@@ -676,10 +676,10 @@ void Snake() {
   allTime = millis();
   //Movement: left....x = 1, right....x = -1, forward....y = 1, down....y = -1. 
   if ((x==0 and y==0) and startingLedOn==true) {
-    displayLed(pY,pX,1);
+    displayLed(shiftedY,shiftedX,1);
     //Serial.print()
   } else if (startingLedOn==true) {
-    displayLed(pY,pX,0);
+    displayLed(shiftedY,shiftedX,0);
     startingLedOn=false;
   }
   if (activatorV == 1 and (x!=0 or y!=0)) {
@@ -690,8 +690,8 @@ void Snake() {
     goThrough=true;
     activatorV=1;
     active=0;
-    sX=0;
-    sY=0;
+    allwaysX=0;
+    allwaysY=0;
     x=0;
     y=0;
     GameOver(bodyLength-3,1);
@@ -711,24 +711,24 @@ void Snake() {
     displayLed(foodY,foodX,millis() % 1000 < 500 ? 1 : 0);
     // This will run every delayTime
     if (allTime - lastTime >= delayTime) {
-      //sY=y;
-      //sX=x;
-      if (sY!=-y and y!=0) {
-        sY=y;
-        sX=0;
-      } else if (sX!=-x and x!=0) {
-        sX=x;
-        sY=0;
+      //allwaysY=y;
+      //allwaysX=x;
+      if (allwaysY!=-y and y!=0) {
+        allwaysY=y;
+        allwaysX=0;
+      } else if (allwaysX!=-x and x!=0) {
+        allwaysX=x;
+        allwaysY=0;
       }
       // Making head bigger
-      pY -= sY;
-      pX -= sX;
+      shiftedY -= allwaysY;
+      shiftedX -= allwaysX;
       Warp();
-      if (Array[pY][pX] > 0) {
+      if (Array[shiftedY][shiftedX] > 0) {
         GameOver((bodyLength-3),1);
       }
-      if (sX!=0 or sY!=0) {
-        Array[pY][pX] = bodyLength + 1;
+      if (allwaysX!=0 or allwaysY!=0) {
+        Array[shiftedY][shiftedX] = bodyLength + 1;
       }
       //This will run only if game snake is on - if you are not dead
       if (gameState==2) {
@@ -748,11 +748,11 @@ void Snake() {
             }
           }
         }
-        if (soundDelay == 0 and (sX !=0 or sY !=0)) {
+        if (soundDelay == 0 and (allwaysX !=0 or allwaysY !=0)) {
             PlaySound(1,0);
           }
         //If snake eated the food
-        if (Array[pY][pX] == Array[foodY][foodX] && Array[pY][pX]!=0) {
+        if (Array[shiftedY][shiftedX] == Array[foodY][foodX] && Array[shiftedY][shiftedX]!=0) {
   //        Serial.println("snez");
           noTone(soundPin);
           PlaySound(2,0);
@@ -783,24 +783,24 @@ void GalaxianGame() {
   } else if (activatorV==0) {
     for (int row = 0; row < 3; row++) {
       for (int col = 0; col < 2; col++) {
-        displayLed(row+pY,col,pgm_read_byte(&(ship[row][col]))); 
+        displayLed(row+shiftedY,col,pgm_read_byte(&(ship[row][col]))); 
       }
     }
   }
   if (activatorV==1) {
     if (allTime-lastTime>=200) {
-      pY-=y;
+      shiftedY-=y;
       y=0;
       Warp();
       for (int row = 0; row < 3; row++) {
         for (int col = 0; col < 2; col++) {
-          Array[row+pY][col] = pgm_read_byte(&(ship[row][col])) + 1; 
+          Array[row+shiftedY][col] = pgm_read_byte(&(ship[row][col])) + 1; 
         }
       }
       if (active==1) {
         active=0;
         PlaySound(4,0);
-        ShootG(pY+1);
+        ShootG(shiftedY+1);
       }
       // Cele vykreslovani hry
       for (int row = 0; row < 16; row++) {
@@ -907,7 +907,7 @@ int playSongDanceMan(String nameOfSong) {
       displayImage(NewSong);
       return 2;
     }
-    if (ran==0 and sX==0) {
+    if (ran==0 and allwaysX==0) {
       return 0;
     } else {
       return prucho;
@@ -925,7 +925,7 @@ int playSongDanceMan(String nameOfSong) {
       GameOver(points,3);
       return 2;
     }
-    if (ran==0 and sX==0) {
+    if (ran==0 and allwaysX==0) {
       return 0;
     } else {
       return prucho;
@@ -945,68 +945,63 @@ void DanceMan() {
   }
   if (activatorV==1) {
     if (prucho==0) {
-      sY=random(0,4);
-      Serial.print("sY: ");
-      Serial.println(sY);
+      allwaysY=random(0,4);
+      Serial.print("allwaysY: ");
+      Serial.println(allwaysY);
       const word* nazev[] = {ArrowUp,ArrowRight,ArrowDown,ArrowLeft};
-      displayImage(nazev[sY]);
-      sX=170;
+      displayImage(nazev[allwaysY]);
+      allwaysX=170;
       prucho=-1;
       x=0;
       y=0;
-    } else if (prucho==-1 and sX<=170) {
+    } else if (prucho==-1 and allwaysX<=180) {
       bool hit = false;
-      if (x==1 and sY==3) {
-        hit = true;
-      } else if (x==-1 and sY==1) {
-        hit = true;
-      } else if (y==1 and sY==0) {
-        hit = true;
-      } else if (y==-1 and sY==2) {
-        hit = true;
-      } else if (sY==-2) {
-        Serial.println("Tohle je ta chyba");
-        hit = true;
-      }
-        else if (x==1 or x==-1 or y==1 or y==-1) {
-        noTone(soundPin);
-        Serial.print("Smer sipky: ");
-        Serial.println(sY);
-        Serial.print("y: ");
-        Serial.println(y);
-        Serial.print("x: ");
-        Serial.println(x);
-        Serial.println("Utekl jsem pres tlacitka");
-        GameOver();
-        /*
-        prucho = random(10,80);
-        sX=0;
-        points-=200;
-        displayClear();
-        displayOled("Bad arrow: " + String(-200) + "\nAll Points: " + String(points));
-        */
+      if (x==1 or x==-1 or y==1 or y==-1) {
+        if (x==1 and allwaysY==3) {
+          hit = true;
+        } else if (x==-1 and allwaysY==1) {
+          hit = true;
+        } else if (y==1 and allwaysY==0) {
+          hit = true;
+        } else if (y==-1 and allwaysY==2) {
+          hit = true;
+        } else if (allwaysY==-2) {
+          Serial.println("Tohle je ta chyba");
+          hit = true;
+        } else {
+          noTone(soundPin);
+          Serial.print("Smer sipky: ");
+          Serial.println(allwaysY);
+          Serial.print("y: ");
+          Serial.println(y);
+          Serial.print("x: ");
+          Serial.println(x);
+          Serial.println(hit);
+          Serial.println("Utekl jsem pres tlacitka");
+          GameOver();
+        }
       }
       if (hit==true) {
         displayClear();
-        if (sX<=170 and sX>110) {
+        if (allwaysX<=170 and allwaysX>110) {
           points+=20;
           displayOled("Perfect: " + String(20) + "\nAll Points: " + String(points));
-        } else if (sX<=110 and sX>50) {
+        } else if (allwaysX<=110 and allwaysX>50) {
           points+=10;
           displayOled("Good: " + String(10) + "\nAll Points: " + String(points));
-        } else if (sX<=50) {
+        } else if (allwaysX<=50) {
           points+=0;
           displayOled("Ok: " + String(0) + "\nAll Points: " + String(points));
         }
         x=0;
         y=0;
-        sX=0;
+        allwaysX=0;
         prucho=1;
       }
     }
-    if (allTime-lastTime>=10 and sX!=1 and sX!=0) {
+    if (allTime-lastTime>=10 and allwaysX!=1 and allwaysX!=0) {
       lastTime=millis();
-      sX--;
+      allwaysX--;
     }
     if (wave==1 and prucho!=2 and gameState==3) {
       prucho = playSongDanceMan("AmongUs");
@@ -1020,40 +1015,92 @@ void DanceMan() {
     displayImage(PushA);
   }
 }
-void InfoFun() {
-  const word* nazev[] = {Low,Medium,High};
-  if (intensity==13) {
-    displayImage(nazev[2]);
-  } else if (intensity==5) {
-    displayImage(nazev[1]);
-  } else if (intensity==0) {
-    displayImage(nazev[0]);
-  } 
-  IsButtonPressed();
-  if (active==-1) {
-    gameState=0;
-    DrawMenu();
+void InfoFun(bool mode) {
+  int Hard = 60;
+  int Easy1 = -50;
+  word* nazev[3];
+  if (mode == true) {
+    nazev[0] = {Low};
+    nazev[1] = {Medium};
+    nazev[2] = {High};
+  } else {
+    nazev[0] = {Easy};
+    nazev[1] = {Medium};
+    nazev[2] = {High/*Hard*/};
   }
-  if (x==-1 or y==1) {
+  if (mode==true) {
     if (intensity==13) {
-      intensity=0;
+      displayImage(nazev[2]);
+      displayOled("Display intensity:\nHIGH");
     } else if (intensity==5) {
-      intensity=13;
+      displayImage(nazev[1]);
+      displayOled("Display intensity:\nMEDIUM");
     } else if (intensity==0) {
-      intensity=5;
+      displayImage(nazev[0]);
+      displayOled("Display intensity:\nLOW");
     } 
-  } else if (x==1 or y==-1) {
-    if (intensity==13) {
-      intensity=5;
-    } else if (intensity==5) {
-      intensity=0;
-    } else if (intensity==0) {
-      intensity=13;
+    IsButtonPressed();
+    if (active==-1) {
+      gameState=0;
+      DrawMenu();
+    }
+    if (x==-1 or y==1) {
+      if (intensity==13) {
+        intensity=0;
+      } else if (intensity==5) {
+        intensity=13;
+      } else if (intensity==0) {
+        intensity=5;
+      } 
+    } else if (x==1 or y==-1) {
+      if (intensity==13) {
+        intensity=5;
+      } else if (intensity==5) {
+        intensity=0;
+      } else if (intensity==0) {
+        intensity=13;
+      } 
+    }
+    EEPROM.write(addressIntensity, intensity);
+    for (int index = 0; index < 4; index++) {
+      lc.setIntensity(index, EEPROM.read(addressIntensity));
+    }
+    delay(200);
+  } else {
+    if (difficulty==Hard) {
+      displayImage(nazev[2]);
+      displayOled("Difficulty:\nHARD");
+    } else if (difficulty==0) {
+      displayImage(nazev[1]);
+      displayOled("Difficulty:\nMEDIUM");
+    } else if (difficulty==Easy1) {
+      displayImage(nazev[0]);
+      displayOled("Difficulty:\nEASY");
     } 
-  }
-  EEPROM.write(addressIntensity, intensity);
-  for (int index = 0; index < 4; index++) {
-    lc.setIntensity(index, EEPROM.read(addressIntensity));
+    IsButtonPressed();
+    if (active==-1) {
+      gameState=0;
+      DrawMenu();
+    }
+    if (x==-1 or y==1) {
+      if (difficulty==Hard) {
+        difficulty=Easy1;
+      } else if (difficulty==0) {
+        difficulty=Hard;
+      } else if (difficulty==Easy1) {
+        difficulty=0;
+      } 
+    } else if (x==1 or y==-1) {
+      if (difficulty==Hard) {
+        difficulty=0;
+      } else if (difficulty==0) {
+        difficulty=Easy1;
+      } else if (difficulty==Easy1) {
+        difficulty=Hard;
+      } 
+    }
+    EEPROM.write(addressDifficulty, difficulty);
+    delay(200);
   }
 }
 void NastaveniHer() {
@@ -1102,6 +1149,8 @@ void NastaveniHer() {
       }
       if (whichIconShowed==3) {
           gameState=4;
+      } else if (whichIconShowed==2) {
+          gameState=41;
       } else if (whichIconShowed==1) {
           activatorV = 1;
           whichIconShowed = 1;
@@ -1210,7 +1259,9 @@ void loop() {
   } else if (gameState==3) {
     DanceMan();
   } else if (gameState==4) {
-    InfoFun();
+    InfoFun(true);
+  } else if (gameState==41) {
+    InfoFun(false); 
   } else if (gameState==5) {
     NastaveniHer();
   } else if (gameState==6) {
