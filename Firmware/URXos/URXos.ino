@@ -37,7 +37,7 @@ void Loop() - Runs every 1/100s or every 10 ms
 /****************************************************************/
 
 //Food position variables
-String versionUrxOS = "0.7.93";
+String versionUrxOS = "0.7.94";
 int foodX = 0;
 int foodY = 0;
 //Delay in game is overrided when function SettingGameSnake is called
@@ -136,7 +136,24 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(b), blink, FALLING);
   // Pin for piezzo buzzer
   pinMode(soundPin, OUTPUT);
-  pinMode(LED_BUILTIN,OUTPUT);
+  const int batteryValue = analogRead(battery);
+  const float mapBattery = (batteryValue * 5.0) / 1024.0;
+  if (mapBattery<2.9 and mapBattery>1) {
+    u8g2.firstPage();
+    do {
+      const String out1 = "Your battery";
+      const String out2 = "is empty";
+      u8g2.setFont(u8g2_font_battery24_tr);
+      u8g2.drawGlyph(100,24,0x30);
+      u8g2.setFont(u8g2_font_helvR12_tr);
+      u8g2.setCursor(0, 13);
+      u8g2.print(out1);
+      u8g2.setCursor(0, 28);
+      u8g2.print(out2);
+    } while ( u8g2.nextPage() );
+    delay(999999999999999999999999999999999999);
+  }
+
   // Erasing and inicializing all displays
   //EEPROM.write(addressIntensity,0);
   intensity = EEPROM.read(addressIntensity);
@@ -394,15 +411,19 @@ void DrawMenu() {
   const float mapBattery = (batteryValue * 5.0) / 1024.0;
   if (mapBattery >= 3.8) {
     whichIcon = 0x34;
-  } else if (mapBattery < 3.8 and mapBattery >= 3.2) {
+  } else if (mapBattery < 3.8 and mapBattery >= 3.5) {
     whichIcon = 0x33;
-  } else if (mapBattery < 3.2 and mapBattery >= 2.9) {
+  } else if (mapBattery < 3.5 and mapBattery >= 3.3) {
     whichIcon = 0x32;
-  } else if (mapBattery < 2.9 and mapBattery >= 2.6) {
+  } else if (mapBattery < 3.3 and mapBattery >= 3.15) {
     whichIcon = 0x31;
-  } else if (mapBattery < 2.6) {
+  } else if (mapBattery < 3.15 and mapBattery >= 2.9) {
     whichIcon = 0x30;
-  }  
+  } else if (mapBattery < 2.9 and mapBattery > 1) {
+    whichIcon = 0;
+  } else {
+    whichIcon = -1;
+  }
   u8g2.firstPage();
   do {
     const String out1 = String(mapBattery) + "V";
@@ -415,6 +436,22 @@ void DrawMenu() {
     u8g2.setCursor(0, 28);
     u8g2.print(out2);
   } while ( u8g2.nextPage() );
+  if (whichIcon==0) {
+    u8g2.firstPage();
+    do {
+      const String out1 = "Your battery";
+      const String out2 = "is empty";
+      u8g2.setFont(u8g2_font_battery24_tr);
+      u8g2.drawGlyph(100,24,0x30);
+      u8g2.setFont(u8g2_font_helvR12_tr);
+      u8g2.setCursor(0, 13);
+      u8g2.print(out1);
+      u8g2.setCursor(0, 28);
+      u8g2.print(out2);
+    } while ( u8g2.nextPage() );
+    displayClear();
+    gameState=-1;
+  }
 }
 void SettingSetting(){
   displayClear();
@@ -425,8 +462,9 @@ void SettingSetting(){
   }
   displayImage(Intensity, 4,4,2,-2,-2);
   displayImage(HighScore, 4,4,0,-2,-2);
+  displayImage(DancemanMenu, 4,4,1,-2,-2);
   activatorV = 0;
-  whichIconShowed = 0;
+  whichIconShowed = 4;
 }
 void SettingGameSnake() {
   allTime = millis();
@@ -928,7 +966,7 @@ void DanceMan() {
         hit = true;
       } else if (sY==-2) {
         Serial.println("Tohle je ta chyba");
-        hit= true;
+        hit = true;
       }
         else if (x==1 or x==-1 or y==1 or y==-1) {
         noTone(soundPin);
@@ -1025,26 +1063,33 @@ void NastaveniHer() {
     } else if (soundState==false) {
       displayImage(Sound_off, 6, 6, 3, -1, -1);
     }
-    IsButtonPressed();
+    //IsButtonPressed();
     if (active==-1) {
       goThrough=true;
       gameState=0;
     }
-    if (whichIconShowed!=0) {
-      if (whichIconShowed==1) {
+    if(whichIconShowed==1) {
+      displayOled("High score");
       whichIconShowed += (abs(x) + 1) * abs(x);
-      //whichIconShowed += (abs(y)) * abs(y);
+      whichIconShowed += (abs(y)) * abs(y);
+    } else if (whichIconShowed==2) {
+      displayOled("Difficulty");
+      whichIconShowed += (abs(x) + 1) * abs(x);
+      whichIconShowed -= (abs(y)) * abs(y);
     } else if (whichIconShowed==3) {
+      displayOled("Display intensity");
       whichIconShowed -= (abs(x) + 1) * abs(x);
       whichIconShowed += (abs(y)) * abs(y);
     } else if (whichIconShowed==4) {
-      //whichIconShowed -= (abs(x) + 1) * abs(x);
+      displayOled("Sound");
+      whichIconShowed -= (abs(x) + 1) * abs(x);
       whichIconShowed -= (abs(y)) * abs(y);
     }
-    } else if (whichIconShowed==0 and active==0) {
-      whichIconShowed=1;
+    if (x!=0 or y!=0) {
+      ShowBorders(whichIconShowed-1);
     }
-    ShowBorders(whichIconShowed-1);
+    x=0;
+    y=0;
     if (active==1 and whichIconShowed!=0) {
       active=0;
       if (whichIconShowed!=4) {
@@ -1154,7 +1199,9 @@ void loop() {
   //digitalWrite(LED_BUILTIN, digitalRead(forward) | digitalRead(down) | digitalRead(right) | digitalRead(left));
   //Turning snake ON
   soundTime = millis();
-  if (gameState==2) {
+  if (gameState==-1) {
+    displayClear();
+  } else if (gameState==2) {
     Snake();
   } else if (gameState==0) {
     Menu(menuFirstWalkThrough, goThrough);
