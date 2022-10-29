@@ -54,7 +54,7 @@ unsigned long lastTime2 = 0;
 unsigned long soundTime = 0;
 unsigned long soundLastTime = 0;
 unsigned long lastDebounceTime = 0;       
-int debounceDelay = 50;
+const int debounceDelay = 100;
 int soundDelay = 0;
 //Buttons variables
 const int forward = 7;//7,8
@@ -448,6 +448,7 @@ void SettingGameGalaxian() {
   delayTime=750-difficulty;
   moveEnemy1=0;
   wave=0;
+  mode=-1;
   points=0;
   activatorV=0;
   prucho = 0;
@@ -640,7 +641,7 @@ void Menu(bool firstGoThrough, bool go) {
       gameState = 3;
     }
   }
-  delay(200);
+  delay(50);
 }
 
 //GameOver function
@@ -825,7 +826,7 @@ void Snake() {
         //If snake eated the food
         if (Array[shiftedY][shiftedX] == Array[foodY][foodX] && Array[shiftedY][shiftedX]!=0) {
           noTone(soundPin);
-          PlaySound(2,0);
+          PlaySound(2);
           if (abs(mode)!=mode) {
             bodyLength += 1;
             delayTime -= 0.5;
@@ -914,7 +915,7 @@ void GalaxianGame() {
       }
       if (active==1) {
         active=0;
-        PlaySound(4,0);
+        PlaySound(4);
         ShootG(shiftedY+1);
       }
       // Cele vykreslovani hry
@@ -930,7 +931,7 @@ void GalaxianGame() {
                 if (i%2==0) {
                   if (row==EnemysG[i] and col==EnemysG[i+1]) {
                     er = 1;
-                    PlaySound(5,0);
+                    PlaySound(5);
                     displayLed(EnemysG[i],EnemysG[i+1],0);
                     displayLed(EnemysG[i],EnemysG[i+1]+1,0);
                     EnemysG[i]=-EnemysG[i];
@@ -1150,7 +1151,7 @@ void InfoFun(bool mode) {
     if (intensity==13) {
       displayImage(nazev[2]);
       displayOled("Display intensity:\nHIGH");
-    } else if (intensity==5) {
+    } else if (intensity==3) {
       displayImage(nazev[1]);
       displayOled("Display intensity:\nMEDIUM");
     } else if (intensity==0) {
@@ -1165,15 +1166,15 @@ void InfoFun(bool mode) {
     if (x==-1 or y==1) {
       if (intensity==13) {
         intensity=0;
-      } else if (intensity==5) {
+      } else if (intensity==3) {
         intensity=13;
       } else if (intensity==0) {
-        intensity=5;
+        intensity=3;
       } 
     } else if (x==1 or y==-1) {
       if (intensity==13) {
-        intensity=5;
-      } else if (intensity==5) {
+        intensity=3;
+      } else if (intensity==3) {
         intensity=0;
       } else if (intensity==0) {
         intensity=13;
