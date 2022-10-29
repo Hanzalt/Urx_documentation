@@ -38,6 +38,8 @@ void Loop() - Runs every 1/100s or every 10 ms
 String versionUrxOS = "0.7.95";
 int foodX = 0;
 int foodY = 0;
+int foodXSuper = 0;
+int foodYSuper = 0;
 //Delay in game is overrided when function SettingGameSnake is called
 float delayTime = 300;
 //GameState for setting menu - 0, gameover - 1, game - Snake - 2, game - Space Invators = 3, info - 4, nothing - 5
@@ -93,10 +95,12 @@ int bodyLength = 3;
 //int opravaPohybu = 0;
 //int opravaPohybuf = 0;
 int activatorV = 0;
+int timer = 0;
 int moveEnemy1 = 0;
 int wave = 0;
+int mode = 0;
 int noteCounter = 0;
-int points = 50;
+int points = 6;
 int prucho = 0;
 int difficulty = 0;
 int intensity = 0;
@@ -257,6 +261,16 @@ void displayClear() {
   }
 }
 void GenerateFood() {
+  if (abs(mode)!=mode and wave!=-2) {
+    for (int row = 0; row < 16; row++) {
+      for (int col = 0; col < 16; col++) {
+        //Making Snake timer longer
+        if (Array[row][col] > 0 ) {
+          Array[row][col]++;
+        }
+      }
+    }
+  }
   while (true) {
     for (int i = 0; i<5;i++) {
       foodX = random(0,16);
@@ -265,15 +279,7 @@ void GenerateFood() {
     if (Array[foodY][foodX]==0) {
       break;
     } 
-  }
-  for (int row = 0; row < 16; row++) {
-    for (int col = 0; col < 16; col++) {
-      //Making Snake timer longer
-      if (Array[row][col] > 0 ) {
-        Array[row][col]++;
-      }
-    }
-  }
+  } 
 }
 void ShootG(int canon) {
   for (int col = 0; col < 16; col++) {
@@ -322,23 +328,6 @@ void IsButtonPressed() {
   y=0;
   active=0;
   while(true) {
-    if (gameState==0) {
-      if (points>0) {
-        displayImage(Nastaveni1, 4,4,2,-2,-2);
-      if (points==1) {
-        points=-40;
-      } else {
-        points--;
-      }
-      } else {
-        displayImage(Nastaveni2, 4,4,2,-2,-2);
-        if (points==0) {
-        points=40;
-      } else {
-        points++;
-      }
-      }
-    }
     if (x!=0 or y!=0 or active!=0) {
       break;
     }
@@ -352,20 +341,21 @@ void ActiveButton() {
     }
   }
 }
-void PlaySound(int sound, int i) {
-  if (soundState==true) {
-    if (sound == 1 and congratsState == true) {
+void PlaySound(int sound, int i=0) {
+  if (soundState==true and abs(mode)!=mode) {
+    if (sound == 1) {
       tone(soundPin,70);
+      soundDelay = 100;
+    } else if (sound == 11) {
+      tone(soundPin,150);
       soundDelay = 100;
     } else if (sound == 2) {
       tone (soundPin,260);
       soundDelay = 250;
-    } 
-    /*else if (sound == 3) {
-      tone (soundPin, 40);
-      soundDelay = 10;
-    } 
-    */else if (sound == 4) {
+    } else if (sound == 3) {
+      tone (soundPin,500);
+      soundDelay = 150;
+    } else if (sound == 4) {
       noTone(soundPin);
       tone (soundPin, 147);
       soundDelay = 100;
@@ -373,12 +363,7 @@ void PlaySound(int sound, int i) {
       noTone(soundPin);
       tone (soundPin, 87);
       soundDelay = 9;
-    }/* else if (sound == 8) {
-      tone(soundPin,i);
-      delay(150);
-      soundDelay = 0;
-    }
-    */else if (sound == 9) {
+    } else if (sound == 9) {
       const float noty[5] = {130.813,164.814,195,998,329.621};
       tone(soundPin,noty[i]);
       soundDelay = 200;
@@ -406,52 +391,9 @@ void DrawMenu() {
   displayImage(Nastaveni1, 4,4,2,-2,-2);
   displayImage(Galaxian, 4,4,0,-2,-2);
   displayImage(DancemanMenu, 4,4,3,-2,-2);
-  byte whichIcon = 0x0;
-  const int batteryValue = analogRead(battery);
-  const float mapBattery = (batteryValue * 5.0) / 1024.0;
-  if (mapBattery >= 3.8) {
-    whichIcon = 0x34;
-  } else if (mapBattery < 3.8 and mapBattery >= 3.5) {
-    whichIcon = 0x33;
-  } else if (mapBattery < 3.5 and mapBattery >= 3.3) {
-    whichIcon = 0x32;
-  } else if (mapBattery < 3.3 and mapBattery >= 3.15) {
-    whichIcon = 0x31;
-  } else if (mapBattery < 3.15 and mapBattery >= 2.9) {
-    whichIcon = 0x30;
-  } else if (mapBattery < 2.9 and mapBattery > 1) {
-    whichIcon = 0;
-  } else {
-    whichIcon = -1;
-  }
-  u8g2.firstPage();
-  do {
-    const String out1 = String(mapBattery) + "V";
-    const String out2 = "Ver. - " + versionUrxOS;
-    u8g2.setFont(u8g2_font_battery24_tr);
-    u8g2.drawGlyph(100,24,whichIcon);
-    u8g2.setFont(u8g2_font_helvR12_tr);
-    u8g2.setCursor(0, 13);
-    u8g2.print(out1);
-    u8g2.setCursor(0, 28);
-    u8g2.print(out2);
-  } while ( u8g2.nextPage() );
-  if (whichIcon==0) {
-    u8g2.firstPage();
-    do {
-      const String out1 = "Your battery";
-      const String out2 = "is empty";
-      u8g2.setFont(u8g2_font_battery24_tr);
-      u8g2.drawGlyph(100,24,0x30);
-      u8g2.setFont(u8g2_font_helvR12_tr);
-      u8g2.setCursor(0, 13);
-      u8g2.print(out1);
-      u8g2.setCursor(0, 28);
-      u8g2.print(out2);
-    } while ( u8g2.nextPage() );
-    displayClear();
-    gameState=-1;
-  }
+  whichIconShowed = 2;
+  ShowBorders(1);
+  active=0;
 }
 void SettingSetting(){
   displayClear();
@@ -464,7 +406,8 @@ void SettingSetting(){
   displayImage(HighScore, 4,4,0,-2,-2);
   displayImage(DancemanMenu, 4,4,1,-2,-2);
   activatorV = 0;
-  whichIconShowed = 4;
+  whichIconShowed = 2;
+  ShowBorders(1);
 }
 void SettingGameSnake() {
   allTime = millis();
@@ -476,10 +419,16 @@ void SettingGameSnake() {
   congrats=0;
   shiftedX = 0;
   shiftedY = 15;
+  mode=1;
+  wave=random(1,5);
+  points=0;
+  delay(100);
   x = 0;
   y = 0;
   allwaysX=0;
   allwaysY=0;
+  foodYSuper=-1;
+  foodXSuper=-1;
   active=0;
   for (int row = 0; row < 16; row++) {
     for (int col = 0; col < 16; col++) {
@@ -487,7 +436,8 @@ void SettingGameSnake() {
     }
   }
   displayClear();
-  displayOled("Your Score: " + String(bodyLength-3) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
+  //displayOled("Your Score: " + String(bodyLength-3) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
+  displayOled("Snake CLASSIC\nFor start press A");
 }
 void SettingGameGalaxian() {
   displayClear();
@@ -543,9 +493,55 @@ void Menu(bool firstGoThrough, bool go) {
   //When menu start show M in start
   if (firstGoThrough==true) {
     const float noty[] = {61.735,261.625,261.625,293.664,329.627};
-    whichIconShowed = 0;
     //Clearing all displays
     displayClear();
+    byte whichIcon = 0x0;
+    const int batteryValue = analogRead(battery);
+    const float mapBattery = (batteryValue * 5.0) / 1024.0;
+    if (mapBattery >= 3.8) {
+      whichIcon = 0x34;
+    } else if (mapBattery < 3.8 and mapBattery >= 3.5) {
+      whichIcon = 0x33;
+    } else if (mapBattery < 3.5 and mapBattery >= 3.3) {
+      whichIcon = 0x32;
+    } else if (mapBattery < 3.3 and mapBattery >= 3.15) {
+      whichIcon = 0x31;
+    } else if (mapBattery < 3.15 and mapBattery >= 2.9) {
+      whichIcon = 0x30;
+    } else if (mapBattery < 2.9 and mapBattery > 1) {
+      whichIcon = 0;
+    } else {
+      whichIcon = -1;
+    }
+    u8g2.firstPage();
+    do {
+      const String out1 = String(mapBattery) + "V";
+      const String out2 = "Ver. - " + versionUrxOS;
+      u8g2.setFont(u8g2_font_battery24_tr);
+      u8g2.drawGlyph(100,24,whichIcon);
+      u8g2.setFont(u8g2_font_helvR12_tr);
+      u8g2.setCursor(0, 13);
+      u8g2.print(out1);
+      u8g2.setCursor(0, 28);
+      u8g2.print(out2);
+    } while ( u8g2.nextPage() );
+    if (whichIcon==0) {
+      u8g2.firstPage();
+      do {
+        const String out1 = "Your battery";
+        const String out2 = "is empty";
+        u8g2.setFont(u8g2_font_battery24_tr);
+        u8g2.drawGlyph(100,24,0x30);
+        u8g2.setFont(u8g2_font_helvR12_tr);
+        u8g2.setCursor(0, 13);
+        u8g2.print(out1);
+        u8g2.setCursor(0, 28);
+        u8g2.print(out2);
+      } while ( u8g2.nextPage() );
+      displayClear();
+      gameState=-1;
+      delay(999999999999999999999999999999999999);
+    }
     for (int i = 0; i < 7; i++){
       const word* nazev[] = {HolTyc1,HolTyc2,HolTyc3,HolTyc4,HolTyc5,HolTyc6,HolTyc7};
       displayImage(nazev[i]);
@@ -555,42 +551,69 @@ void Menu(bool firstGoThrough, bool go) {
       delay(100);
       noTone(soundPin);
     }
-    ActiveButton();
+    int i = 0;
+    active=0;
+    while (true) {
+      i++;
+      if (i==100) {
+        break;
+      } else if (active==1) {
+        break;
+      }
+      delay(20);
+    }
     DrawMenu();
   } else if (go==true) {
     DrawMenu();
   }
-  IsButtonPressed();
-  if (whichIconShowed!=0) {
-    /*
-     * Solving menu
-     *  _____      
-     * |     |
-     * | 2,4 |
-     * | 1,3 |
-     * |_____|
-     * I now that apps next to each other have difference 2,
-     * and apps under each other have difference 1.
-     * So with little of math that is under I could solve this problem.
-     */
-    if (whichIconShowed==1) {
-      whichIconShowed += (abs(x) + 1) * abs(x);
-      whichIconShowed += (abs(y)) * abs(y);
-    } else if (whichIconShowed==2) {
-      whichIconShowed += (abs(x) + 1) * abs(x);
-      whichIconShowed -= (abs(y)) * abs(y);
-    } else if (whichIconShowed==3) {
-      whichIconShowed -= (abs(x) + 1) * abs(x);
-      whichIconShowed += (abs(y)) * abs(y);
-    } else if (whichIconShowed==4) {
-      whichIconShowed -= (abs(x) + 1) * abs(x);
-      whichIconShowed -= (abs(y)) * abs(y);
-    }
+  if (points>0) {
+    displayImage(Nastaveni1, 4,4,2,-2,-2);
+  if (points==1) {
+    points=-6;
+  } else {
+    points--;
   }
-  if (whichIconShowed==0 and active==0) {
-    whichIconShowed=2;
+  } else {
+    displayImage(Nastaveni2, 4,4,2,-2,-2);
+    if (points==0) {
+    points=6;
+  } else {
+    points++;
   }
-  ShowBorders(whichIconShowed-1);
+  }
+  /*
+   * Solving menu
+   *  _____      
+   * |     |
+   * | 2,4 |
+   * | 1,3 |
+   * |_____|
+   * I now that apps next to each other have difference 2,
+   * and apps under each other have difference 1.
+   * So with little of math that is under I could solve this problem.
+   */
+  if (whichIconShowed==1) {
+    displayOled("Galaxian");
+    whichIconShowed += (abs(x) + 1) * abs(x);
+    whichIconShowed += (abs(y)) * abs(y);
+  } else if (whichIconShowed==2) {
+    displayOled("Snake");
+    whichIconShowed += (abs(x) + 1) * abs(x);
+    whichIconShowed -= (abs(y)) * abs(y);
+  } else if (whichIconShowed==3) {
+    displayOled("Settings");
+    whichIconShowed -= (abs(x) + 1) * abs(x);
+    whichIconShowed += (abs(y)) * abs(y);
+  } else if (whichIconShowed==4) {
+    displayOled("DanceMan");
+    whichIconShowed -= (abs(x) + 1) * abs(x);
+    whichIconShowed -= (abs(y)) * abs(y);
+  }
+  if (x!=0 or y!=0) {
+    ShowBorders(whichIconShowed-1);
+  }
+  x=0;
+  y=0;
   if (active==1 and whichIconShowed!=0) {
     active=0;
     if (soundState==true) {
@@ -624,6 +647,7 @@ void Menu(bool firstGoThrough, bool go) {
 void GameOver(int score=0, int game = -1) {
   //Changing gameState for gameOver state
   noTone(soundPin);
+  points=6;
   soundDelay = 0;
   gameState = 1;
   menuFirstWalkThrough = false;
@@ -670,18 +694,43 @@ void GameOver(int score=0, int game = -1) {
   goThrough=true;
   gameState=0;
 }
+
 //Main function for game Snake
 void Snake() {
   //Local variables Snake
   allTime = millis();
   //Movement: left....x = 1, right....x = -1, forward....y = 1, down....y = -1. 
-  if ((x==0 and y==0) and startingLedOn==true) {
+  if ((mode==1 or mode==2) and active==1) {
+    noTone(soundPin);
+    int mod = mode;
+    SettingGameSnake();
+    mode=-mod;
+    displayOled("Your Score: " + String(bodyLength-3+points) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
+  } else if (mode==1 and y!=0) {
+    displayOled("Snake SUPER\nFor start press A");
+    displayLed(foodY,foodX,0);
+    GenerateFood();
+    foodXSuper=foodX;
+    foodYSuper=foodY;
+    GenerateFood();
+    wave=-1;
+    mode=2;
+    y=0;
+    delay(100);
+  } else if (mode==2 and y!=0) {
+    displayOled("Snake CLASSIC\nFor start press A");
+    mode=1;
+    y=0;
+    delay(100);
+  }
+  if ((x==0 and y==0) and startingLedOn==true and abs(mode)!=mode) {
     displayLed(shiftedY,shiftedX,1);
     //Serial.print()
-  } else if (startingLedOn==true) {
+  } else if (startingLedOn==true and abs(mode)!=mode) {
     displayLed(shiftedY,shiftedX,0);
     startingLedOn=false;
   }
+  //Turning Snake ON
   if (activatorV == 1 and (x!=0 or y!=0)) {
     activatorV=0;
     lastTime = allTime;
@@ -694,7 +743,8 @@ void Snake() {
     allwaysY=0;
     x=0;
     y=0;
-    GameOver(bodyLength-3,1);
+    displayOled("Your Score: " + String(bodyLength-3+points) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
+    GameOver(bodyLength-3+points,1);
   }
   if (activatorV == 0 and active == 1 and startingLedOn==false) {
     activatorV = 1;
@@ -702,30 +752,47 @@ void Snake() {
     x=0;
     noTone(soundPin);
   }
-  if (((bodyLength-4) >= EEPROM.read(addressSnake1) and congratsState==true) and congrats <= 3) {
+  if (((bodyLength-4+points) >= EEPROM.read(addressSnake1) and congratsState==true) and congrats <= 3) {
     PlaySound(9,congrats);
     congratsState=false;
   }
   if (activatorV == 0) {
     // Smart blinking food led 
-    displayLed(foodY,foodX,millis() % 1000 < 500 ? 1 : 0);
+    if (mode==2 or wave==-2 and timer!=0) {
+      displayLed(foodYSuper,foodXSuper,millis() % 100 < 50 ? 1 : 0);
+      displayLed(foodY,foodX,millis() % 1000 < 500 ? 1 : 0);
+    } else {
+      displayLed(foodYSuper,foodXSuper, 0);
+      displayLed(foodY,foodX,millis() % 1000 < 500 ? 1 : 0);
+    }
     // This will run every delayTime
     if (allTime - lastTime >= delayTime) {
-      //allwaysY=y;
-      //allwaysX=x;
-      if (allwaysY!=-y and y!=0) {
-        allwaysY=y;
-        allwaysX=0;
-      } else if (allwaysX!=-x and x!=0) {
-        allwaysX=x;
-        allwaysY=0;
+      if (abs(mode)!=mode) {
+        if (allwaysY!=-y and y!=0) {
+          allwaysY=y;
+          allwaysX=0;
+        } else if (allwaysX!=-x and x!=0) {
+          allwaysX=x;
+          allwaysY=0;
+        }
+      } else {
+        int y1 = random(-1,2);
+        int x1 = random(-1,2);
+        if (allwaysY!=-y1 and y1!=0) {
+          allwaysY=y1;
+          allwaysX=0;
+        } else if (allwaysX!=-x1 and x1!=0) {
+          allwaysX=x1;
+          allwaysY=0;
+        }
       }
       // Making head bigger
       shiftedY -= allwaysY;
       shiftedX -= allwaysX;
       Warp();
       if (Array[shiftedY][shiftedX] > 0) {
-        GameOver((bodyLength-3),1);
+        displayOled("Your Score: " + String(bodyLength-3+points) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
+        GameOver((bodyLength-3+points),1);
       }
       if (allwaysX!=0 or allwaysY!=0) {
         Array[shiftedY][shiftedX] = bodyLength + 1;
@@ -749,19 +816,66 @@ void Snake() {
           }
         }
         if (soundDelay == 0 and (allwaysX !=0 or allwaysY !=0)) {
-            PlaySound(1,0);
+          if (wave==-2) {
+            PlaySound(11);
+          } else {
+            PlaySound(1);
           }
+        }
         //If snake eated the food
         if (Array[shiftedY][shiftedX] == Array[foodY][foodX] && Array[shiftedY][shiftedX]!=0) {
-  //        Serial.println("snez");
           noTone(soundPin);
           PlaySound(2,0);
-          bodyLength += 1;
-          delayTime -= 0.5;
+          if (abs(mode)!=mode) {
+            bodyLength += 1;
+            delayTime -= 0.5;
+          }
           foodX=-1;
           foodY=-1;
           GenerateFood();
-          displayOled("Your Score: " + String(bodyLength-3) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
+          if (wave==0 and mode==-2) {
+            wave=-2;
+            foodXSuper=foodX;
+            foodYSuper=foodY;
+            GenerateFood();
+            timer=20;
+            displayOled("Super food: " + String(timer));
+          } else if (wave!=-2) {
+            wave--;
+          }
+          if (abs(mode)!=mode and wave!=-2) {
+            displayOled("Your Score: " + String(bodyLength-3+points) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
+          }
+        }
+        if (Array[shiftedY][shiftedX] == Array[foodYSuper][foodXSuper] && Array[shiftedY][shiftedX]!=0) {
+          noTone(soundPin);
+          PlaySound(3,0);
+          for (int row = 0; row < 16; row++) {
+            for (int col = 0; col < 16; col++) {
+              //Making Snake timer longer
+              if (Array[row][col] > 0 ) {
+                Array[row][col]+=2;
+              }
+            }
+          }
+          timer=0;
+          if (abs(mode)!=mode) {
+            bodyLength += 2;
+            delayTime -= 0.5;
+          }
+          points++;
+          foodYSuper=-1;
+          foodXSuper=-1;
+        }
+        if (wave==-2 and timer!=0) {
+          displayOled("Super food: " + String(timer+1));
+          timer--;
+        } else if (wave==-2) {
+          displayLed(foodYSuper,foodXSuper,0);
+          foodYSuper=-1;
+          foodXSuper=-1;
+          wave = random (2,5);
+          displayOled("Your Score: " + String(bodyLength-3+points) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
         }
         //Resetting timer
         lastTime = allTime;
@@ -769,6 +883,7 @@ void Snake() {
     }
   }
 }
+
 void GalaxianGame() {
   allTime = millis();
   if (active == -1) {
@@ -874,6 +989,7 @@ void GalaxianGame() {
     }
   }
 }
+
 int playSongDanceMan(String nameOfSong) {
   // Pisnicka z project hubu https://create.arduino.cc/projecthub/GeneralSpud/passive-buzzer-song-take-on-me-by-a-ha-0f04a8
   if ((nameOfSong=="AmongUs" or nameOfSong=="Among" or nameOfSong=="among" or nameOfSong=="Amongus") and soundDelay==0 and noteCounter<=36) {
@@ -934,6 +1050,7 @@ int playSongDanceMan(String nameOfSong) {
     return prucho;
   }
 }
+
 void DanceMan() {
   allTime = millis();
   if (active==1 and activatorV==0) {
@@ -1015,6 +1132,7 @@ void DanceMan() {
     displayImage(PushA);
   }
 }
+
 void InfoFun(bool mode) {
   int Hard = 60;
   int Easy1 = -50;
@@ -1103,6 +1221,7 @@ void InfoFun(bool mode) {
     delay(200);
   }
 }
+
 void NastaveniHer() {
   if (activatorV == 0) {
     if (soundState==true) {
@@ -1280,6 +1399,12 @@ void loop() {
           congrats+=1;
           congratsState=true;
         }
+    } else if (soundDelay == 150) {
+      tone(soundPin, 200);
+      soundDelay=151;
+    } else if (soundDelay == 151) {
+      tone(soundPin,360);
+      soundDelay=0;
     } else {
       soundDelay=0;
     }
