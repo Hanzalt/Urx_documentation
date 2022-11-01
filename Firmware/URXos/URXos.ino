@@ -35,7 +35,7 @@ void Loop() - Runs every 1/100s or every 10 ms
 /****************************************************************/
 
 //Food position variables
-String versionUrxOS = "0.7.96";
+String versionUrxOS = "0.7.97";
 int foodX = 0;
 int foodY = 0;
 int foodXSuper = 0;
@@ -469,14 +469,17 @@ void SettingGameDanceMan() {
   displayClear();
   points=0; // How many points
   prucho = 0; // When the arrow will apear
-  wave=0; // What song to play
+  //wave=0; // What song to play
+  mode=1;
+  active=0;
   noteCounter=0; // for playSongDanceMan counting which note to play
   soundDelay=0;
   allwaysX=0; // Counting time when pressed
   allwaysY=0; // Direction variable
   activatorV=0; // Is game on?
   lastTime=millis();
-  displayOled("\nAll Points: " + String(points));
+  displayImage(ArrowUp);
+  displayOled("Song: Among us\nFor start press A");
 }
 //Making snake go through walls
 void Warp() {
@@ -991,18 +994,22 @@ void GalaxianGame() {
   }
 }
 
-int playSongDanceMan(String nameOfSong) {
+void playSongDanceMan(String nameOfSong) {
   // Pisnicka z project hubu https://create.arduino.cc/projecthub/GeneralSpud/passive-buzzer-song-take-on-me-by-a-ha-0f04a8
   if ((nameOfSong=="AmongUs" or nameOfSong=="Among" or nameOfSong=="among" or nameOfSong=="Amongus") and soundDelay==0 and noteCounter<=36) {
     soundLastTime = millis();
     //Serial.println(noteCounter);
-    int notes [37] =  {1046,1244,1400,1510,1400,1244,1046,0,  932,1174,1046,0,  780, 525, 0,   1046,1244,1400,1510,1400,1244,1400,0,  1510,1400,1244,1510,1400,1244,1510,1400,1244,1510,1400,1244,1510,0};
-    int timing [37] = {250, 250, 250, 250, 250, 250, 250, 500,125,125, 250, 500,250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 500,125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 500};
-    if (notes[noteCounter]==0) {
-      noTone(soundPin);
-    } else if (soundState==true) {
-      tone(soundPin,notes[noteCounter]);
+    int notes [37] =  {1046,1244,1400,1510,1400,1244,1046,0  ,932,1174,1046,0  ,780,525,0  ,1046,1244,1400,1510,1400,1244,1400,0  ,1510,1400,1244,1510,1400,1244,1510,1400,1244,1510,1400,1244,1510,0};
+    int timing [37] = {250 ,250 ,250 ,250 ,250 ,250 ,250 ,500,125,125 ,250 ,500,250,250,250,250 ,250 ,250 ,250 ,250 ,250 ,250 ,500,125 ,125 ,125 ,125 ,125 ,125 ,125 ,125 ,125 ,125 ,125 ,125 ,125 ,500};
+    if (soundDelay==0) {
+      if (notes[noteCounter]==0) {
+        noTone(soundPin);
+      } else if (soundState==true) {
+        tone(soundPin,notes[noteCounter]);
+      }
+      soundDelay=timing[noteCounter];
     }
+    /*
     for (int i = 0; i < noteCounter+1; i++) {
       if (notes[i]==0) {
         soundDelay++;
@@ -1014,65 +1021,67 @@ int playSongDanceMan(String nameOfSong) {
         soundDelay = timing[i];
       }
     }
+    */
     noteCounter++;
-    int ran = random(0,2);
     if (noteCounter==36) {
-      noteCounter=0;
-      wave=2;
-      active==0;
       displayClear();
-      displayImage(NewSong);
-      return 2;
-    }
-    if (ran==0 and allwaysX==0) {
-      return 0;
-    } else {
-      return prucho;
+      GameOver(points,3);
     }
   } else if (nameOfSong=="Song1" and soundDelay==0 and noteCounter<=42) {
-    int noty[42] = {147,247,220,196,165,330,294,262,156,233,220,196,139,233,220,196,147,247,220,196,165,330,294,262,156,233,220,196,139,233,220,196};
+    int noty[38] = {147,247,220,196,165,330,294,262,156,233,220,196,139,233,220,196,147,247,220,196,165,330,294,262,156,233,220,196,139,233,220,196};
     if (soundState==true){
       tone(soundPin,noty[noteCounter]);
     }
     soundDelay = 200;
     noteCounter++;
-    int ran = random(0,2);
-    if (noteCounter==42) {
+    //int ran = random(0,2);
+    if (noteCounter==38) {
       noteCounter=0;
       GameOver(points,3);
-      return 2;
     }
-    if (ran==0 and allwaysX==0) {
-      return 0;
-    } else {
-      return prucho;
-    }
-  } else {
-    return prucho;
-  }
+  } 
 }
 
 void DanceMan() {
   allTime = millis();
-  if (active==1 and activatorV==0) {
-    activatorV=1;
-    wave=1; // Random vybere pisnicku
-  } else if (active==-1) {
+  if (active==-1) {
     GameOver();
-    Serial.println("Utekl jsem pres B");
   }
-  if (activatorV==1) {
-    if (prucho==0) {
+  if ((mode==1 or mode==2) and active==1) {
+    noTone(soundPin);
+    int mod = mode;
+    SettingGameDanceMan();
+    prucho=1;
+    mode=-mod;
+    if (mode==-2 ) {
+      displayOled("Song: Uno");
+    } else if (mode==-1 ) {
+      displayOled("Song: Among us");
+    }
+  } else if (mode==1 and y!=0) {
+    displayOled("Song: Uno\nFor start press A");
+    displayImage(ArrowDown);
+    mode=2;
+    y=0;
+    delay(100);
+  } else if (mode==2 and y!=0) {
+    displayOled("Song: Among us\nFor start press A");
+    displayImage(ArrowUp);
+    mode=1;
+    y=0;
+    delay(100);
+  }
+  //Serial.println(mode);
+  if (abs(mode)!=mode) {
+    if (prucho==1) {
       allwaysY=random(0,4);
-      Serial.print("allwaysY: ");
-      Serial.println(allwaysY);
       const word* nazev[] = {ArrowUp,ArrowRight,ArrowDown,ArrowLeft};
       displayImage(nazev[allwaysY]);
+      prucho=0;
       allwaysX=170;
-      prucho=-1;
       x=0;
       y=0;
-    } else if (prucho==-1 and allwaysX<=180) {
+    } else if (allwaysX<=180) {
       bool hit = false;
       if (x==1 or x==-1 or y==1 or y==-1) {
         if (x==1 and allwaysY==3) {
@@ -1084,18 +1093,9 @@ void DanceMan() {
         } else if (y==-1 and allwaysY==2) {
           hit = true;
         } else if (allwaysY==-2) {
-          Serial.println("Tohle je ta chyba");
           hit = true;
         } else {
           noTone(soundPin);
-          Serial.print("Smer sipky: ");
-          Serial.println(allwaysY);
-          Serial.print("y: ");
-          Serial.println(y);
-          Serial.print("x: ");
-          Serial.println(x);
-          Serial.println(hit);
-          Serial.println("Utekl jsem pres tlacitka");
           GameOver();
         }
       }
@@ -1121,16 +1121,11 @@ void DanceMan() {
       lastTime=millis();
       allwaysX--;
     }
-    if (wave==1 and prucho!=2 and gameState==3) {
-      prucho = playSongDanceMan("AmongUs");
-    } else if (wave==2 and prucho!=2 and gameState==3) {
-      prucho = playSongDanceMan("Song1");
-    } else if (prucho==2 and active==1) {
-      prucho=0;
-      active=0;
+    if (mode==-1 and gameState==3) {
+      playSongDanceMan("AmongUs");
+    } else if (mode==-2 and gameState==3) {
+      playSongDanceMan("Song1");
     }
-  } else {
-    displayImage(PushA);
   }
 }
 
@@ -1159,7 +1154,7 @@ void InfoFun(bool mode) {
       displayOled("Display intensity:\nLOW");
     } 
     IsButtonPressed();
-    if (active==-1) {
+    if (active==-1 or active==1) {
       gameState=0;
       DrawMenu();
     }
