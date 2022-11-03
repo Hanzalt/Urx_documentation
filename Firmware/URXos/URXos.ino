@@ -35,7 +35,7 @@ void Loop() - Runs every 1/100s or every 10 ms
 /****************************************************************/
 
 //Food position variables
-String versionUrxOS = "0.7.97";
+String versionUrxOS = "0.7.98";
 int foodX = 0;
 int foodY = 0;
 int foodXSuper = 0;
@@ -56,6 +56,7 @@ unsigned long soundLastTime = 0;
 unsigned long lastDebounceTime = 0;       
 const int debounceDelay = 100;
 int soundDelay = 0;
+int soundDelay1 = 0;
 //Buttons variables
 const int forward = 7;//7,8
 const int right = 8;//8,6
@@ -73,14 +74,12 @@ const int bodyLengthConst = 3;
 const int allLedTurnOn = 0b11111111;
 const int allLedTurnOff = 0b00000000;
 const int addressSound = 1;
-const int addressSnake1 = 2;
-const int addressSnake2 = 3;
-const int addressIntensity = 4;
-const int addressGalaxian1 = 5;
-const int addressGalaxian2 = 6;
-const int addressDanceMan1 = 7;
-const int addressDanceMan2 = 9;
-const int addressDifficulty = 11;
+const int addressIntensity = 2;
+const int addressDifficulty = 3;
+const int addressSnake1 = 4;
+const int addressSnake2 = 6;
+const int addressGalaxian1 = 8;
+const int addressGalaxian2 = 10;
 //Movement variables
 volatile int x = 0;
 volatile int y = 0;
@@ -112,7 +111,271 @@ bool goThrough = true;
 bool startingLedOn = true;
 bool load = true;
 bool lastState = true;
+const int melodyGalaxian[] PROGMEM= {
 
+
+  // Bloody Tears, from Castlevania II
+  // Arranged by Bobby Lee. THe flute part was used 
+  // https://musescore.com/user/263171/scores/883296
+  
+  //B-flat major Bb Eb
+  REST, 4, NOTE_G5, 4,
+  NOTE_A5, 4, NOTE_AS5, 4,
+  NOTE_A5, 4, NOTE_F5, 4,
+  NOTE_A5, 4, NOTE_G5, 4,
+  REST, 4, NOTE_G5, 4,
+  NOTE_A5, 4, NOTE_AS5, 4,
+  NOTE_C6, 4, NOTE_AS5, 4,
+
+  NOTE_A5, 4, NOTE_G5, 4, //8
+  REST, 4, NOTE_G5, 4,
+  NOTE_A5, 4, NOTE_AS5, 4,
+  NOTE_A5, 4, NOTE_F5, 4,
+  NOTE_A5, 4, NOTE_G5, 4,
+  NOTE_D6, 4, REST, 8, NOTE_C6, 8,
+  REST, 4, NOTE_AS5, 4,
+
+  NOTE_A5, 4, NOTE_AS5, 8, NOTE_C6, 8, //15
+  NOTE_F6, 8, REST, 8, REST, 4,
+  NOTE_G5, 16, NOTE_D5, 16, NOTE_D6, 16, NOTE_D5, 16, NOTE_C6, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16,
+  NOTE_A5, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16, NOTE_A5, 16, NOTE_D5, 16, NOTE_G5, 16, NOTE_D5, 16,
+  NOTE_A5, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16, NOTE_C6, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16,
+
+  NOTE_A5, 16, NOTE_D5, 16, NOTE_F5, 16, NOTE_D5, 16, NOTE_A5, 16, NOTE_D5, 16, NOTE_G5, 16, NOTE_D5, 16, //20
+  NOTE_G5, 16, NOTE_D5, 16, NOTE_D6, 16, NOTE_D5, 16, NOTE_C6, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16,
+  NOTE_A5, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16, NOTE_A5, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16,
+  NOTE_A5, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16, NOTE_C6, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16,
+  NOTE_A5, 16, NOTE_D5, 16, NOTE_F5, 16, NOTE_D5, 16, NOTE_A5, 16, NOTE_D5, 16, NOTE_G5, 16, NOTE_D5, 16,
+
+  NOTE_G5, 16, NOTE_D5, 16, NOTE_D6, 16, NOTE_D5, 16, NOTE_C6, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16, //25
+  NOTE_A5, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16, NOTE_A5, 16, NOTE_D5, 16, NOTE_G5, 16, NOTE_D5, 16,
+  NOTE_A5, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16, NOTE_C6, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16,
+  NOTE_A5, 16, NOTE_D5, 16, NOTE_F5, 16, NOTE_D5, 16, NOTE_A5, 16, NOTE_D5, 16, NOTE_G5, 16, NOTE_D5, 16,
+  NOTE_AS5, 16, NOTE_D5, 16, NOTE_D6, 16, NOTE_D5, 16, NOTE_C6, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16,
+
+  NOTE_A5, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16, NOTE_A5, 16, NOTE_D5, 16, NOTE_G5, 16, NOTE_D5, 16,
+  NOTE_A5, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16, NOTE_C6, 16, NOTE_D5, 16, NOTE_AS5, 16, NOTE_D5, 16,
+  NOTE_A5, 16, NOTE_D5, 16, NOTE_F5, 16, NOTE_D5, 16, NOTE_A5, 16, NOTE_D5, 16, NOTE_G5, 16, NOTE_D5, 16,
+  NOTE_C6, 16, NOTE_C6, 16, NOTE_F6, 16, NOTE_D6, 8, REST, 16, REST, 8,
+  REST, 4, NOTE_C6, 16, NOTE_AS5, 16,
+
+  NOTE_C6, -8,  NOTE_F6, -8, NOTE_D6, -4, //35
+  NOTE_C6, 8, NOTE_AS5, 8,
+  NOTE_C6, 8, NOTE_F6, 16, NOTE_D6, 8, REST, 16, REST, 8,
+  REST, 4, NOTE_C6, 8, NOTE_D6, 8,
+  NOTE_DS6, -8, NOTE_F6, -8,
+
+  NOTE_D6, -8, REST, 16, NOTE_DS6, 8, REST, 8, //40
+  NOTE_C6, 8, NOTE_F6, 16, NOTE_D6, 8, REST, 16, REST, 8,
+  REST, 4, NOTE_C6, 8, NOTE_AS5, 8,
+  NOTE_C6, -8,  NOTE_F6, -8, NOTE_D6, -4,
+  NOTE_C6, 8, NOTE_AS5, 8,
+
+  NOTE_C6, 8, NOTE_F6, 16, NOTE_D6, 8, REST, 16, REST, 8, //45
+  REST, 4, NOTE_C6, 8, NOTE_D6, 8,
+  NOTE_DS6, -8, NOTE_F6, -8,
+  NOTE_D5, 8, NOTE_FS5, 8, NOTE_F5, 8, NOTE_A5, 8,
+  NOTE_A5, -8, NOTE_G5, -4,
+
+  NOTE_A5, -8, NOTE_G5, -4, //50
+  NOTE_A5, -8, NOTE_G5, -4,
+  NOTE_AS5, 8, NOTE_A5, 8, NOTE_G5, 8, NOTE_F5, 8,
+  NOTE_A5, -8, NOTE_G5, -8, NOTE_D5, 8,
+  NOTE_A5, -8, NOTE_G5, -8, NOTE_D5, 8,
+  NOTE_A5, -8, NOTE_G5, -8, NOTE_D5, 8,
+
+  NOTE_AS5, 4, NOTE_C6, 4, NOTE_A5, 4, NOTE_AS5, 4,
+  NOTE_G5,16, NOTE_D5,16, NOTE_D6,16, NOTE_D5,16, NOTE_C6,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16,//56 //r
+  NOTE_A5,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16, NOTE_A5,16, NOTE_D5,16, NOTE_G5,16, NOTE_D5,16,
+  NOTE_A5,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16, NOTE_C6,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16,
+  NOTE_A5,16, NOTE_D5,16, NOTE_F5,16, NOTE_D5,16, NOTE_A5,16, NOTE_D5,16, NOTE_G5,16, NOTE_D5,16,
+
+  NOTE_G5,16, NOTE_D5,16, NOTE_D6,16, NOTE_D5,16, NOTE_C6,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16,//61
+  NOTE_A5,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16, NOTE_A5,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16,
+  NOTE_A5,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16, NOTE_C6,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16,
+  NOTE_A5,16, NOTE_D5,16, NOTE_F5,16, NOTE_D5,16, NOTE_A5,16, NOTE_D5,16, NOTE_G5,16, NOTE_D5,16,
+  NOTE_G5,16, NOTE_D5,16, NOTE_D6,16, NOTE_D5,16, NOTE_C6,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16,
+
+  NOTE_A5,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16, NOTE_A5,16, NOTE_D5,16, NOTE_G5,16, NOTE_D5,16,//66
+  NOTE_A5,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16, NOTE_C6,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16,
+  NOTE_A5,16, NOTE_D5,16, NOTE_F5,16, NOTE_D5,16, NOTE_A5,16, NOTE_D5,16, NOTE_G5,16, NOTE_D5,16,
+  NOTE_AS5,16, NOTE_D5,16, NOTE_D6,16, NOTE_D5,16, NOTE_C6,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16,
+  NOTE_A5,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16, NOTE_A5,16, NOTE_D5,16, NOTE_G5,16, NOTE_D5,16,
+
+  NOTE_A5,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16, NOTE_C6,16, NOTE_D5,16, NOTE_AS5,16, NOTE_D5,16,//71 //
+  NOTE_A5, 16, NOTE_D5, 16, NOTE_F5, 16, NOTE_D5, 16, NOTE_A5, 8, NOTE_G5, 32, NOTE_A5, 32, NOTE_AS5, 32, NOTE_C6, 32,
+  NOTE_D6, 16, NOTE_G5, 16, NOTE_AS5, 16, NOTE_G5, 16, NOTE_C6, 16, NOTE_G5, 16, NOTE_D6, 16, NOTE_G5, 16,
+  NOTE_C6, 16, NOTE_G5, 16, NOTE_A5, 16, NOTE_G5, 16, NOTE_F6, 16, NOTE_G5, 16, NOTE_D6, 16, NOTE_DS5, 16,
+  NOTE_D6, 4, REST, 4,
+
+  NOTE_C5, 8, REST, 8, NOTE_A4, -16, NOTE_AS4, -16, NOTE_C5, 16, //76
+  NOTE_D6, 16, NOTE_G4, 16, NOTE_AS4, 16, NOTE_G4, 16, NOTE_C5, 16, NOTE_G4, 16, NOTE_D6, 16, NOTE_G4, 16,
+  NOTE_C6, 16, NOTE_F4, 16, NOTE_A4, 16, NOTE_F4, 16, NOTE_F5, 16, NOTE_F4, 16, NOTE_D6, 16, NOTE_DS4, 16,
+  NOTE_D6, 16, REST, 8, NOTE_E4, 16, NOTE_F4, 16,
+  
+  //change of key B Major A# C# D# F# G#
+  NOTE_GS4, 8, REST, 8, NOTE_AS4, 8, REST, 8,
+
+  NOTE_DS5, 16, NOTE_GS4, 16, NOTE_B4, 16, NOTE_GS4, 16, NOTE_CS5, 16, NOTE_GS4, 16, NOTE_DS5, 16, NOTE_GS4, 16, //81
+  NOTE_CS5, 16, NOTE_FS4, 16, NOTE_AS4, 16, NOTE_FS4, 16, NOTE_FS5, 16, NOTE_FS4, 16, NOTE_DS5, 16, NOTE_E5, 16,
+  NOTE_D5, 4, REST, 4,
+  NOTE_CS5, 8, REST, 8, NOTE_AS4, -16,  NOTE_B4, -16, NOTE_CS5, 16,
+  NOTE_DS5, 16, NOTE_GS4, 16, NOTE_B4, 16, NOTE_GS4, 16, NOTE_CS5, 16, NOTE_GS4, 16, NOTE_DS5, 16, NOTE_GS4, 16,
+  
+  NOTE_CS5, 16, NOTE_FS4, 16, NOTE_AS4, 16, NOTE_FS4, 16, NOTE_FS5, 16, NOTE_FS4, 16, NOTE_DS5, 16, NOTE_E5, 16,
+  NOTE_DS5, 4, REST, 8, NOTE_DS5, 16,  NOTE_E5, 16,
+  NOTE_FS5, 16, NOTE_CS5, 16, NOTE_E5, 16, NOTE_CS4, 16, NOTE_DS5, 16, NOTE_E5, 16, NOTE_G5, 16, NOTE_AS5, 16,
+  NOTE_GS5, 16, NOTE_DS5, 16, NOTE_DS6, 16, NOTE_DS5, 16, NOTE_CS6, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16,
+
+  NOTE_AS5, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16, NOTE_AS5, 16, NOTE_DS5, 16, NOTE_GS5, 16, NOTE_DS5, 16, //90
+  NOTE_AS5, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16, NOTE_CS6, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16,
+  NOTE_AS5, 16, NOTE_DS5, 16, NOTE_FS5, 16, NOTE_DS5, 16, NOTE_AS5, 16, NOTE_DS5, 16, NOTE_GS5, 16, NOTE_DS5, 16,
+  NOTE_GS5, 16, NOTE_DS5, 16, NOTE_DS6, 16, NOTE_DS5, 16, NOTE_CS6, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16,
+
+  NOTE_AS5, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16, NOTE_AS5, 16, NOTE_DS5, 16, NOTE_GS5, 16, NOTE_DS5, 16,//94
+  NOTE_AS5, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16, NOTE_CS6, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16,
+  NOTE_AS5, 16, NOTE_DS5, 16, NOTE_FS5, 16, NOTE_DS5, 16, NOTE_AS5, 16, NOTE_DS5, 16, NOTE_GS5, 16, NOTE_DS5, 16,
+  NOTE_GS5, 16, NOTE_DS5, 16, NOTE_DS6, 16, NOTE_DS5, 16, NOTE_CS6, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16,
+
+  NOTE_AS5, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16, NOTE_AS5, 16, NOTE_DS5, 16, NOTE_GS5, 16, NOTE_DS5, 16,//98
+  NOTE_AS5, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16, NOTE_CS6, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16,
+  NOTE_AS5, 16, NOTE_DS5, 16, NOTE_FS5, 16, NOTE_DS5, 16, NOTE_AS5, 16, NOTE_DS5, 16, NOTE_GS5, 16, NOTE_DS5, 16,
+  NOTE_GS5, 16, NOTE_DS5, 16, NOTE_DS6, 16, NOTE_DS5, 16, NOTE_CS6, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16,
+
+  NOTE_AS5, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16, NOTE_AS5, 16, NOTE_DS5, 16, NOTE_GS5, 16, NOTE_DS5, 16,//102
+  NOTE_AS5, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16, NOTE_CS6, 16, NOTE_DS5, 16, NOTE_B5, 16, NOTE_DS5, 16,
+  NOTE_AS5, 16, NOTE_DS5, 16, NOTE_FS5, 16, NOTE_DS5, 16, NOTE_AS5, 16, NOTE_DS5, 16, NOTE_GS5, 16, NOTE_DS5, 16,
+  
+  NOTE_CS6, 8, NOTE_FS6, 16, NOTE_DS6, 8, REST,16, REST,8, //107
+  REST,4, NOTE_CS6, 8, NOTE_B5, 8,
+  NOTE_CS6,-8, NOTE_FS6, -8, NOTE_DS6, -4,
+  NOTE_CS6, 8, NOTE_B5, 8,
+  NOTE_CS6, 8, NOTE_FS6, 16, NOTE_DS6, 8, REST,16, REST,8,
+  REST,4, NOTE_CS6, 8, NOTE_B5, 8,
+  NOTE_E6, -8, NOTE_F6, -8,
+  
+  NOTE_DS6,-8, REST,16, NOTE_E6,8, REST,16, REST,16, //112
+  NOTE_CS6, 8, NOTE_FS6, 16, NOTE_DS6, 8, REST,16, REST,8,
+  REST,4, NOTE_CS6, 8, NOTE_B5, 8,
+  NOTE_CS6,-8, NOTE_FS6, -8, NOTE_DS6, -4,
+  NOTE_CS6, 8, NOTE_B5, 8,
+  
+  NOTE_CS6, 8, NOTE_FS6, 16, NOTE_DS6, 8, REST,16, REST,8, //117
+  REST,4, NOTE_CS5, 8, NOTE_DS5, 8,
+  NOTE_E5, -8, NOTE_F5, -8,
+  NOTE_DS5, 8, NOTE_G5, 8, NOTE_GS5, 8, NOTE_AS5, 8,
+  NOTE_AS5, -8, NOTE_GS5, -8,
+
+  NOTE_AS5, -8, NOTE_GS5, -8,//122
+  NOTE_AS5, -8, NOTE_GS5, -8,
+  NOTE_B6, 8, NOTE_AS5, 8, NOTE_GS5, 8, NOTE_FS5, 8,
+  NOTE_AS5,-8, NOTE_GS6, -8, NOTE_DS5, 8,
+  NOTE_AS5,-8, NOTE_GS6, -8, NOTE_DS5, 8,
+  NOTE_AS5,-8, NOTE_GS6, -8, NOTE_DS5, 8,
+
+  NOTE_B5,8, NOTE_CS6, 8, NOTE_AS5, 8, NOTE_B5, 8,//128
+  NOTE_GS5,8, REST,8, REST, 16
+  
+};  
+const int melodyCat[] PROGMEM= {
+
+  // Keyboard cat
+  // Score available at https://musescore.com/user/142788/scores/147371
+
+    NOTE_C4,4, NOTE_E4,4, NOTE_G4,4, NOTE_E4,4, 
+    NOTE_C4,4, NOTE_E4,8, NOTE_G4,-4, NOTE_E4,4,
+    NOTE_A3,4, NOTE_C4,4, NOTE_E4,4, NOTE_C4,4,
+    NOTE_A3,4, NOTE_C4,8, NOTE_E4,-4, NOTE_C4,4,
+    NOTE_G3,4, NOTE_B3,4, NOTE_D4,4, NOTE_B3,4,
+    NOTE_G3,4, NOTE_B3,8, NOTE_D4,-4, NOTE_B3,4,
+
+    NOTE_G3,4, NOTE_G3,8, NOTE_G3,-4, NOTE_G3,8, NOTE_G3,4, 
+    NOTE_G3,4, NOTE_G3,4, NOTE_G3,8, NOTE_G3,4,
+    NOTE_C4,4, NOTE_E4,4, NOTE_G4,4, NOTE_E4,4, 
+    NOTE_C4,4, NOTE_E4,8, NOTE_G4,-4, NOTE_E4,4,
+    NOTE_A3,4, NOTE_C4,4, NOTE_E4,4, NOTE_C4,4,
+    NOTE_A3,4, NOTE_C4,8, NOTE_E4,-4, NOTE_C4,4,
+    NOTE_G3,4, NOTE_B3,4, NOTE_D4,4, NOTE_B3,4,
+    NOTE_G3,4, NOTE_B3,8, NOTE_D4,-4, NOTE_B3,4,
+
+    NOTE_G3,-1, 
+  
+};
+const int melodyDoom[] PROGMEM= {
+
+  // At Doom's Gate (E1M1)
+  // Score available at https://musescore.com/pieridot/doom
+
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8, //1
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_B2, 8, NOTE_C3, 8,
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8,
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, -2,
+
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8, //5
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_B2, 8, NOTE_C3, 8,
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8,
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, -2,
+
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8, //9
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_B2, 8, NOTE_C3, 8,
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8,
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, -2,
+
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8, //13
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_B2, 8, NOTE_C3, 8,
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8,
+  NOTE_FS3, -16, NOTE_D3, -16, NOTE_B2, -16, NOTE_A3, -16, NOTE_FS3, -16, NOTE_B2, -16, NOTE_D3, -16, NOTE_FS3, -16, NOTE_A3, -16, NOTE_FS3, -16, NOTE_D3, -16, NOTE_B2, -16,
+
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8, //17
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_B2, 8, NOTE_C3, 8,
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8,
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, -2,
+
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8, //21
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_B2, 8, NOTE_C3, 8,
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8,
+  NOTE_B3, -16, NOTE_G3, -16, NOTE_E3, -16, NOTE_G3, -16, NOTE_B3, -16, NOTE_E4, -16, NOTE_G3, -16, NOTE_B3, -16, NOTE_E4, -16, NOTE_B3, -16, NOTE_G4, -16, NOTE_B4, -16,
+
+  NOTE_A2, 8, NOTE_A2, 8, NOTE_A3, 8, NOTE_A2, 8, NOTE_A2, 8, NOTE_G3, 8, NOTE_A2, 8, NOTE_A2, 8, //25
+  NOTE_F3, 8, NOTE_A2, 8, NOTE_A2, 8, NOTE_DS3, 8, NOTE_A2, 8, NOTE_A2, 8, NOTE_E3, 8, NOTE_F3, 8,
+  NOTE_A2, 8, NOTE_A2, 8, NOTE_A3, 8, NOTE_A2, 8, NOTE_A2, 8, NOTE_G3, 8, NOTE_A2, 8, NOTE_A2, 8,
+  NOTE_F3, 8, NOTE_A2, 8, NOTE_A2, 8, NOTE_DS3, -2,
+
+  NOTE_A2, 8, NOTE_A2, 8, NOTE_A3, 8, NOTE_A2, 8, NOTE_A2, 8, NOTE_G3, 8, NOTE_A2, 8, NOTE_A2, 8, //29
+  NOTE_F3, 8, NOTE_A2, 8, NOTE_A2, 8, NOTE_DS3, 8, NOTE_A2, 8, NOTE_A2, 8, NOTE_E3, 8, NOTE_F3, 8,
+  NOTE_A2, 8, NOTE_A2, 8, NOTE_A3, 8, NOTE_A2, 8, NOTE_A2, 8, NOTE_G3, 8, NOTE_A2, 8, NOTE_A2, 8,
+  NOTE_A3, -16, NOTE_F3, -16, NOTE_D3, -16, NOTE_A3, -16, NOTE_F3, -16, NOTE_D3, -16, NOTE_C4, -16, NOTE_A3, -16, NOTE_F3, -16, NOTE_A3, -16, NOTE_F3, -16, NOTE_D3, -16,
+
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8, //33
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_B2, 8, NOTE_C3, 8,
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8,
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, -2,
+
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8, //37
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_B2, 8, NOTE_C3, 8,
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8,
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, -2,
+
+  NOTE_CS3, 8, NOTE_CS3, 8, NOTE_CS4, 8, NOTE_CS3, 8, NOTE_CS3, 8, NOTE_B3, 8, NOTE_CS3, 8, NOTE_CS3, 8, //41
+  NOTE_A3, 8, NOTE_CS3, 8, NOTE_CS3, 8, NOTE_G3, 8, NOTE_CS3, 8, NOTE_CS3, 8, NOTE_GS3, 8, NOTE_A3, 8,
+  NOTE_B2, 8, NOTE_B2, 8, NOTE_B3, 8, NOTE_B2, 8, NOTE_B2, 8, NOTE_A3, 8, NOTE_B2, 8, NOTE_B2, 8,
+  NOTE_G3, 8, NOTE_B2, 8, NOTE_B2, 8, NOTE_F3, -2,
+
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8, //45
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_B2, 8, NOTE_C3, 8,
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8,
+  NOTE_B3, -16, NOTE_G3, -16, NOTE_E3, -16, NOTE_G3, -16, NOTE_B3, -16, NOTE_E4, -16, NOTE_G3, -16, NOTE_B3, -16, NOTE_E4, -16, NOTE_B3, -16, NOTE_G4, -16, NOTE_B4, -16,
+
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8, //49
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_B2, 8, NOTE_C3, 8,
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8,
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, -2,
+
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8, //53
+  NOTE_C3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_AS2, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_B2, 8, NOTE_C3, 8,
+  NOTE_E2, 8, NOTE_E2, 8, NOTE_E3, 8, NOTE_E2, 8, NOTE_E2, 8, NOTE_D3, 8, NOTE_E2, 8, NOTE_E2, 8,
+  NOTE_FS3, -16, NOTE_DS3, -16, NOTE_B2, -16, NOTE_FS3, -16, NOTE_DS3, -16, NOTE_B2, -16, NOTE_G3, -16, NOTE_D3, -16, NOTE_B2, -16, NOTE_DS4, -16, NOTE_DS3, -16, NOTE_B2, -16,
+};
 /****************************************************************/
 //Setup function
 /****************************************************************/
@@ -292,20 +555,42 @@ int EnemyG(int pruchod) {
   int randomR = 0; // How many enemys - maximum
   int randomR2 = 0; // How many enemys - between randomR and 1
   int randomR3 = 0; // How many enemys in one line
+  int difficultyCounter = 0;
+  if (difficulty==-50) { // Easy
+    difficultyCounter = -2;
+  } else if (difficultyCounter==60) {
+    difficultyCounter = 2;
+  }
   if (pruchod <= 5) {
-     randomR = 5;
-     randomR3 = 2;
+    randomR = 4+difficultyCounter;
+    randomR3 = 2;
   } else if (pruchod <= 10 and pruchod > 5) {
-     randomR = 8;
-     randomR3 = 3;
+    randomR = 7+difficultyCounter;
+    randomR3 = 3;
   } else if (pruchod >= 10) {
-     randomR = 12;
-     randomR3 = 3;
+    randomR = 8+difficultyCounter;
+    randomR3 = 3;
   }
   randomR2 = random(1,randomR+1);
+  int EnemyPosRepetition[randomR2]; 
   for (int i = 0; i < randomR2*2; i++) {
+    //noTone(soundPin);
     if (i%2==0) {
-      EnemysG[i] = random(1,15);
+      int randomPos = random(1,15);
+      while(true) {
+        bool calibrateEnemysPosition = true;
+        for (int x = 0; x < randomR2;x++) {
+          if (EnemyPosRepetition[x]==randomPos) {
+            randomPos=random(1,15);
+            calibrateEnemysPosition = false;
+          }
+        }
+        if (calibrateEnemysPosition==true) {
+          break;
+        }
+      }
+      EnemysG[i] = randomPos;
+      EnemyPosRepetition[i/2]=EnemysG[i];
       EnemysG[i+1] = 15;
       EnemyDouble[i] = random(1, randomR3+1);
       /*
@@ -357,12 +642,11 @@ void PlaySound(int sound, int i=0) {
       soundDelay = 150;
     } else if (sound == 4) {
       noTone(soundPin);
-      tone (soundPin, 147);
+      tone (soundPin, 170);
       soundDelay = 100;
     } else if (sound == 5) {
-      noTone(soundPin);
-      tone (soundPin, 87);
-      soundDelay = 9;
+      tone (soundPin, 90);
+      soundDelay = 90;
     } else if (sound == 9) {
       const float noty[5] = {130.813,164.814,195,998,329.621};
       tone(soundPin,noty[i]);
@@ -406,6 +690,7 @@ void SettingSetting(){
   displayImage(HighScore, 4,4,0,-2,-2);
   displayImage(DancemanMenu, 4,4,1,-2,-2);
   activatorV = 0;
+  active=0;
   whichIconShowed = 2;
   ShowBorders(1);
 }
@@ -447,6 +732,8 @@ void SettingGameGalaxian() {
   shiftedY=13;
   delayTime=750-difficulty;
   moveEnemy1=0;
+  noteCounter=0;
+  mode=0;
   wave=0;
   mode=-1;
   points=0;
@@ -463,12 +750,11 @@ void SettingGameGalaxian() {
       Array[row][col] = 0;
     }
   }
-  displayOled("Your Score: " + String(points) + "\nHigh Score: " + String(EEPROM.read(addressGalaxian1)));
+  displayOled("Your Score: " + String(points) + "\nHigh Score: " + String(read2EEPROM(addressGalaxian1)));
 }
 void SettingGameDanceMan() {
   displayClear();
   points=0; // How many points
-  prucho = 0; // When the arrow will apear
   //wave=0; // What song to play
   mode=1;
   active=0;
@@ -478,8 +764,14 @@ void SettingGameDanceMan() {
   allwaysY=0; // Direction variable
   activatorV=0; // Is game on?
   lastTime=millis();
-  displayImage(ArrowUp);
-  displayOled("Song: Among us\nFor start press A");
+  if (prucho!=-2) {
+    displayImage(ArrowUp);
+    displayOled("Song: Among us\nFor start press A");
+  } else if (prucho==-2) {
+    displayImage(ArrowDown);
+    displayOled("Song: Uno\nFor start press A");
+  }
+  prucho = 0; // When the arrow will apear
 }
 //Making snake go through walls
 void Warp() {
@@ -636,6 +928,7 @@ void Menu(bool firstGoThrough, bool go) {
       gameState = 6;
     } else if (whichIconShowed==3) {
       //Showing menu text N - nastaveni
+      delay(250);
       SettingSetting();
       gameState = 5;
     } else if (whichIconShowed==4) {
@@ -660,30 +953,25 @@ void GameOver(int score=0, int game = -1) {
   if (game==1 or game==2 or game==4 or game==-1) {
     //Showing text Game over
     displayImage(GameOverMessage);
-  } else if (game==3) {
+  } else if (game==3 and score>30) {
     displayImage(Win);
+  } else {
+    displayImage(GameOverMessage);
   }
   //Snake
   if (game == 1) {
-    if (EEPROM.read(addressSnake1) <= score) {
-      EEPROM.write(addressSnake2,EEPROM.read(addressSnake1));
-      EEPROM.write(addressSnake1,score);
-    } else if (EEPROM.read(addressSnake2) < score) {
-      EEPROM.write(addressSnake2,score);
-    }
-  } else if (game == 3) {
-    if (read2EEPROM(addressDanceMan1) <= score) {
-      write2EEPROM(addressDanceMan2,read2EEPROM(addressDanceMan2));
-      write2EEPROM(addressDanceMan1,score);
-    } else if (read2EEPROM(addressDanceMan2) < score) {
-      write2EEPROM(addressDanceMan2,score);
+    if (read2EEPROM(addressSnake1) <= score) {
+      write2EEPROM(addressSnake2,read2EEPROM(addressSnake1));
+      write2EEPROM(addressSnake1,score);
+    } else if (read2EEPROM(addressSnake2) < score) {
+      write2EEPROM(addressSnake2,score);
     }
   } else if (game == 4) {
-    if (EEPROM.read(addressGalaxian1) <= score) {
-      EEPROM.write(addressGalaxian2,EEPROM.read(addressGalaxian2));
-      EEPROM.write(addressGalaxian1,score);
-    } else if (EEPROM.read(addressGalaxian2) < score) {
-      EEPROM.write(addressGalaxian2,score);
+    if (read2EEPROM(addressGalaxian1) <= score) {
+      write2EEPROM(addressGalaxian2,read2EEPROM(addressGalaxian2));
+      write2EEPROM(addressGalaxian1,score);
+    } else if (read2EEPROM(addressGalaxian2) < score) {
+      write2EEPROM(addressGalaxian2,score);
     }
   }
   ActiveButton();
@@ -709,7 +997,7 @@ void Snake() {
     int mod = mode;
     SettingGameSnake();
     mode=-mod;
-    displayOled("Your Score: " + String(bodyLength-3+points) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
+    displayOled("Your Score: " + String(bodyLength-3+points) + "\nHigh Score: " + String(read2EEPROM(addressSnake1)));
   } else if (mode==1 and y!=0) {
     displayOled("Snake SUPER\nFor start press A");
     displayLed(foodY,foodX,0);
@@ -747,7 +1035,7 @@ void Snake() {
     allwaysY=0;
     x=0;
     y=0;
-    displayOled("Your Score: " + String(bodyLength-3+points) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
+    displayOled("Your Score: " + String(bodyLength-3+points) + "\nHigh Score: " + String(read2EEPROM(addressSnake1)));
     GameOver(bodyLength-3+points,1);
   }
   if (activatorV == 0 and active == 1 and startingLedOn==false) {
@@ -756,7 +1044,7 @@ void Snake() {
     x=0;
     noTone(soundPin);
   }
-  if (((bodyLength-4+points) >= EEPROM.read(addressSnake1) and congratsState==true) and congrats <= 3) {
+  if (((bodyLength-4+points) >= read2EEPROM(addressSnake1) and congratsState==true) and congrats <= 3) {
     PlaySound(9,congrats);
     congratsState=false;
   }
@@ -795,7 +1083,7 @@ void Snake() {
       shiftedX -= allwaysX;
       Warp();
       if (Array[shiftedY][shiftedX] > 0) {
-        displayOled("Your Score: " + String(bodyLength-3+points) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
+        displayOled("Your Score: " + String(bodyLength-3+points) + "\nHigh Score: " + String(read2EEPROM(addressSnake1)));
         GameOver((bodyLength-3+points),1);
       }
       if (allwaysX!=0 or allwaysY!=0) {
@@ -848,7 +1136,7 @@ void Snake() {
             wave--;
           }
           if (abs(mode)!=mode and wave!=-2) {
-            displayOled("Your Score: " + String(bodyLength-3+points) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
+            displayOled("Your Score: " + String(bodyLength-3+points) + "\nHigh Score: " + String(read2EEPROM(addressSnake1)));
           }
         }
         if (Array[shiftedY][shiftedX] == Array[foodYSuper][foodXSuper] && Array[shiftedY][shiftedX]!=0) {
@@ -879,7 +1167,7 @@ void Snake() {
           foodYSuper=-1;
           foodXSuper=-1;
           wave = random (2,5);
-          displayOled("Your Score: " + String(bodyLength-3+points) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
+          displayOled("Your Score: " + String(bodyLength-3+points) + "\nHigh Score: " + String(read2EEPROM(addressSnake1)));
         }
         //Resetting timer
         lastTime = allTime;
@@ -907,6 +1195,7 @@ void GalaxianGame() {
     }
   }
   if (activatorV==1) {
+    playSong("BloodyTears");
     if (allTime-lastTime>=200) {
       shiftedY-=y;
       y=0;
@@ -918,7 +1207,7 @@ void GalaxianGame() {
       }
       if (active==1) {
         active=0;
-        PlaySound(4);
+        //PlaySound(4);
         ShootG(shiftedY+1);
       }
       // Cele vykreslovani hry
@@ -929,26 +1218,27 @@ void GalaxianGame() {
             if (Array[row][col]==0) {
               displayLed(row,col,0);
             } else if (Array[row][col]==1) {
-              int er = 0;
+              int displayShip = 0;
               for (int i = 0; i < prucho*2; i++) {
                 if (i%2==0) {
                   if (row==EnemysG[i] and col==EnemysG[i+1]) {
-                    er = 1;
-                    PlaySound(5);
-                    displayLed(EnemysG[i],EnemysG[i+1],0);
-                    displayLed(EnemysG[i],EnemysG[i+1]+1,0);
-                    EnemysG[i]=-EnemysG[i];
-                    displayLed(row,col,0);
-                    if (EnemyDouble[i]>1 and EnemysG[i]!=abs(EnemysG[i])) {
+                    displayShip = 1;
+                    if (EnemyDouble[i]==1 and abs(EnemysG[i])==EnemysG[i]) {
+                      displayLed(EnemysG[i],EnemysG[i+1]+1,0);
+                      //PlaySound(5);
                       EnemysG[i]=-EnemysG[i];
-                      EnemyDouble[i]-=1;
-                      EnemysG[i+1]=EnemysG[i+1]-1;
-                      displayLed(EnemysG[i],EnemysG[i+1]+2,0);
-                      displayLed(EnemysG[i],EnemysG[i+1]+1,1);
-                    } else if ((EnemysG[i]!=17 and EnemysG[i+1]!=17) and EnemysG[i]!=abs(EnemysG[i])) {
-                      wave+=1;
+                      EnemysG[i+1]=-EnemysG[i+1];
                       points+=1;
-                      displayOled("Your Score: " + String(points) + "\nHigh Score: " + String(EEPROM.read(addressGalaxian1)));
+                      displayOled("Your Score: " + String(points) + "\nHigh Score: " + String(read2EEPROM(addressGalaxian1)));
+                    } else if (EnemyDouble[i]>1 and abs(EnemysG[i])==EnemysG[i]) {
+                      //PlaySound(5);
+                      EnemyDouble[i]-=1;
+                      displayLed(EnemysG[i],EnemysG[i+1],0);
+                      points+=1;
+                      displayOled("Your Score: " + String(points) + "\nHigh Score: " + String(read2EEPROM(addressGalaxian1)));
+                    } 
+                    if ((EnemysG[i]!=17 and EnemysG[i+1]!=17) and EnemysG[i]!=abs(EnemysG[i])) {
+                      wave+=1;
                       EnemysG[i+1]=17;
                       EnemysG[i]=17;
                     }
@@ -958,7 +1248,7 @@ void GalaxianGame() {
                   }
                 }
               } 
-              if (er!=1) {
+              if (displayShip!=1) {
                 displayLed(row,col,1);
               }
             }
@@ -984,8 +1274,9 @@ void GalaxianGame() {
             displayLed(EnemysG[i],EnemysG[i+1],1);
             EnemysG[i+1]--;
           }
-          if (EnemysG[i+1]<=1) {
+          if (EnemysG[i+1]<=0+EnemyDouble[i]-1) {
             GameOver(points,4);
+            break;
           }
         }
       }
@@ -994,9 +1285,9 @@ void GalaxianGame() {
   }
 }
 
-void playSongDanceMan(String nameOfSong) {
+void playSong(String nameOfSong) {
   // Pisnicka z project hubu https://create.arduino.cc/projecthub/GeneralSpud/passive-buzzer-song-take-on-me-by-a-ha-0f04a8
-  if ((nameOfSong=="AmongUs" or nameOfSong=="Among" or nameOfSong=="among" or nameOfSong=="Amongus") and soundDelay==0 and noteCounter<=36) {
+  if ((nameOfSong=="AmongUs" or nameOfSong=="Among" or nameOfSong=="among" or nameOfSong=="Amongus") and soundDelay==0) {
     soundLastTime = millis();
     //Serial.println(noteCounter);
     int notes [37] =  {1046,1244,1400,1510,1400,1244,1046,0  ,932,1174,1046,0  ,780,525,0  ,1046,1244,1400,1510,1400,1244,1400,0  ,1510,1400,1244,1510,1400,1244,1510,1400,1244,1510,1400,1244,1510,0};
@@ -1009,37 +1300,120 @@ void playSongDanceMan(String nameOfSong) {
       }
       soundDelay=timing[noteCounter];
     }
-    /*
-    for (int i = 0; i < noteCounter+1; i++) {
-      if (notes[i]==0) {
-        soundDelay++;
-      } 
-      int index = soundDelay+noteCounter;
-      if (soundDelay!=0 and i == noteCounter) {
-        soundDelay = timing[i];
-      } else if (i==noteCounter) {
-        soundDelay = timing[i];
-      }
-    }
-    */
     noteCounter++;
-    if (noteCounter==36) {
+    if (noteCounter==37) {
+      noteCounter=0;
       displayClear();
       GameOver(points,3);
     }
-  } else if (nameOfSong=="Song1" and soundDelay==0 and noteCounter<=42) {
-    int noty[38] = {147,247,220,196,165,330,294,262,156,233,220,196,139,233,220,196,147,247,220,196,165,330,294,262,156,233,220,196,139,233,220,196};
+  } else if (nameOfSong=="Uno" and soundDelay==0) {
+    int noty[34] = {147,247,220,196,165,330,294,262,156,233,220,196,139,233,220,196,147,247,220,196,165,330,294,262,156,233,220,196,139,233,220,196};
     if (soundState==true){
       tone(soundPin,noty[noteCounter]);
     }
     soundDelay = 200;
     noteCounter++;
     //int ran = random(0,2);
-    if (noteCounter==38) {
+    if (noteCounter==34) {
       noteCounter=0;
+      displayClear();
       GameOver(points,3);
     }
-  } 
+  } else if (nameOfSong=="BloodyTears" and soundDelay1==0) {
+    int tempo=144;
+    // sizeof gives the number of bytes, each int value is composed of two bytes (16 bits)
+    // there are two values per note (pitch and duration), so for each note there are four bytes
+    int notes = sizeof(melodyGalaxian) / sizeof(melodyGalaxian[0]) / 2;
+    
+    // this calculates the duration of a whole note in ms
+    int wholenote = (60000 * 4) / tempo;
+    
+    int divider = 0, noteDuration = 0;
+    divider = pgm_read_word_near(melodyGalaxian+noteCounter+1);
+    if (divider > 0) {
+      // regular note, just proceed
+      noteDuration = (wholenote) / divider;
+    } else if (divider < 0) {
+      // dotted notes are represented with negative durations!!
+      noteDuration = (wholenote) / abs(divider);
+      noteDuration *= 1.5; // increases the duration in half for dotted notes
+    }
+
+    // we only play the note for 90% of the duration, leaving 10% as a pause
+    tone(soundPin, pgm_read_word_near(melodyGalaxian+noteCounter), noteDuration*0.9);
+    noteCounter+=2;
+    // Wait for the specief duration before playing the next note.
+    soundDelay1 = noteDuration;
+    if (noteCounter==1352) {
+      noteCounter=70;
+    }
+    // stop the waveform generation before the next note.
+    //noTone(soundPin);
+  } else if (nameOfSong=="KeyboardCat" and soundDelay1==0) {
+    int tempo=160;
+    // sizeof gives the number of bytes, each int value is composed of two bytes (16 bits)
+    // there are two values per note (pitch and duration), so for each note there are four bytes
+    int notes = sizeof(melodyCat) / sizeof(melodyCat[0]) / 2;
+    
+    // this calculates the duration of a whole note in ms
+    int wholenote = (60000 * 4) / tempo;
+    
+    int divider = 0, noteDuration = 0;
+    divider = pgm_read_word_near(melodyCat+noteCounter+1);
+    if (divider > 0) {
+      // regular note, just proceed
+      noteDuration = (wholenote) / divider;
+    } else if (divider < 0) {
+      // dotted notes are represented with negative durations!!
+      noteDuration = (wholenote) / abs(divider);
+      noteDuration *= 1.5; // increases the duration in half for dotted notes
+    }
+
+    // we only play the note for 90% of the duration, leaving 10% as a pause
+    tone(soundPin, pgm_read_word_near(melodyCat+noteCounter), noteDuration*0.9);
+    noteCounter+=2;
+    // Wait for the specief duration before playing the next note.
+    soundDelay1 = noteDuration;
+    if (noteCounter==118) {
+      noteCounter=0;
+      displayClear();
+      GameOver(points,3);
+    }
+    // stop the waveform generation before the next note.
+    //noTone(soundPin);
+  } else if (nameOfSong=="Doom" and soundDelay1==0) {
+    int tempo=225;
+    // sizeof gives the number of bytes, each int value is composed of two bytes (16 bits)
+    // there are two values per note (pitch and duration), so for each note there are four bytes
+    int notes = sizeof(melodyDoom) / sizeof(melodyDoom[0]) / 2;
+    
+    // this calculates the duration of a whole note in ms
+    int wholenote = (60000 * 4) / tempo;
+    
+    int divider = 0, noteDuration = 0;
+    divider = pgm_read_word_near(melodyDoom+noteCounter+1);
+    if (divider > 0) {
+      // regular note, just proceed
+      noteDuration = (wholenote) / divider;
+    } else if (divider < 0) {
+      // dotted notes are represented with negative durations!!
+      noteDuration = (wholenote) / abs(divider);
+      noteDuration *= 1.5; // increases the duration in half for dotted notes
+    }
+
+    // we only play the note for 90% of the duration, leaving 10% as a pause
+    tone(soundPin, pgm_read_word_near(melodyDoom+noteCounter), noteDuration*0.9);
+    noteCounter+=2;
+    // Wait for the specief duration before playing the next note.
+    soundDelay1 = noteDuration;
+    if (noteCounter==500) { //1358
+      noteCounter=0;
+      displayClear();
+      GameOver(points,3);
+    }
+    // stop the waveform generation before the next note.
+    //noTone(soundPin);
+  }
 }
 
 void DanceMan() {
@@ -1047,9 +1421,10 @@ void DanceMan() {
   if (active==-1) {
     GameOver();
   }
-  if ((mode==1 or mode==2) and active==1) {
+  if (abs(mode)==mode and active==1) {
     noTone(soundPin);
     int mod = mode;
+    prucho=-mode;
     SettingGameDanceMan();
     prucho=1;
     mode=-mod;
@@ -1057,19 +1432,40 @@ void DanceMan() {
       displayOled("Song: Uno");
     } else if (mode==-1 ) {
       displayOled("Song: Among us");
+    } else if (mode==-3) {
+      displayOled("Song: DOOM");
+    } else if (mode==-4) {
+      displayOled("Song: Key. cat");
     }
   } else if (mode==1 and y!=0) {
-    displayOled("Song: Uno\nFor start press A");
-    displayImage(ArrowDown);
-    mode=2;
+    mode=3+y;
     y=0;
     delay(100);
   } else if (mode==2 and y!=0) {
-    displayOled("Song: Among us\nFor start press A");
-    displayImage(ArrowUp);
-    mode=1;
+    mode-=y;
     y=0;
     delay(100);
+  } else if (mode==3 and y!=0) {
+    mode-=y;
+    y=0;
+    delay(100);
+  } else if (mode==4 and y!=0) {
+    mode=2+y;
+    y=0;
+    delay(100);
+  }
+  if (mode==1) {
+    displayOled("Song: Among us\nFor start press A");
+    displayImage(ArrowUp);
+  } else if (mode==2) {
+    displayOled("Song: Uno\nFor start press A");
+    displayImage(ArrowDown);
+  } else if (mode==3) {
+    displayOled("Song: DOOM\nFor start press A");
+    displayImage(ArrowLeft);
+  } else if (mode==4) {
+    displayOled("Song: Key cat\nFor start press A");
+    displayImage(ArrowRight);
   }
   //Serial.println(mode);
   if (abs(mode)!=mode) {
@@ -1102,19 +1498,20 @@ void DanceMan() {
       if (hit==true) {
         displayClear();
         if (allwaysX<=170 and allwaysX>110) {
-          points+=20;
-          displayOled("Perfect: " + String(20) + "\nAll Points: " + String(points));
+          points+=allwaysX/10;
+          displayOled("Perfect: " + String(allwaysX/10) + "\nAll Points: " + String(points));
         } else if (allwaysX<=110 and allwaysX>50) {
-          points+=10;
-          displayOled("Good: " + String(10) + "\nAll Points: " + String(points));
+          points+=allwaysX/10;
+          displayOled("Good: " + String(allwaysX/10) + "\nAll Points: " + String(points));
         } else if (allwaysX<=50) {
-          points+=0;
-          displayOled("Ok: " + String(0) + "\nAll Points: " + String(points));
+          points+=allwaysX/10;
+          displayOled("Ok: " + String(allwaysX/10) + "\nAll Points: " + String(points));
         }
         x=0;
         y=0;
         allwaysX=0;
         prucho=1;
+        //delay(100);
       }
     }
     if (allTime-lastTime>=10 and allwaysX!=1 and allwaysX!=0) {
@@ -1122,9 +1519,13 @@ void DanceMan() {
       allwaysX--;
     }
     if (mode==-1 and gameState==3) {
-      playSongDanceMan("AmongUs");
+      playSong("AmongUs");
     } else if (mode==-2 and gameState==3) {
-      playSongDanceMan("Song1");
+      playSong("Uno");
+    } else if (mode==-3 and gameState==3) {
+      playSong("Doom");
+    } else if (mode==-4 and gameState==3) {
+      playSong("KeyboardCat");
     }
   }
 }
@@ -1155,8 +1556,8 @@ void InfoFun(bool mode) {
     } 
     IsButtonPressed();
     if (active==-1 or active==1) {
-      gameState=0;
-      DrawMenu();
+      gameState=5;
+      SettingSetting();
     }
     if (x==-1 or y==1) {
       if (intensity==13) {
@@ -1192,9 +1593,9 @@ void InfoFun(bool mode) {
       displayOled("Difficulty:\nEASY");
     } 
     IsButtonPressed();
-    if (active==-1) {
-      gameState=0;
-      DrawMenu();
+    if (active==-1 or active==1) {
+      gameState=5;
+      SettingSetting();
     }
     if (x==-1 or y==1) {
       if (difficulty==Hard) {
@@ -1243,7 +1644,11 @@ void NastaveniHer() {
       whichIconShowed -= (abs(x) + 1) * abs(x);
       whichIconShowed += (abs(y)) * abs(y);
     } else if (whichIconShowed==4) {
-      displayOled("Sound");
+      if (soundState==true) {
+        displayOled("Sound ON");
+      } else if (soundState==false) {
+        displayOled("Sound OFF");
+      }
       whichIconShowed -= (abs(x) + 1) * abs(x);
       whichIconShowed -= (abs(y)) * abs(y);
     }
@@ -1271,6 +1676,7 @@ void NastaveniHer() {
           whichIconShowed = 1;
           displayImage(SnakeMenu,4,4,1,-2,-2);
           displayImage(Galaxian,4,4,0,-2,-2);
+          ShowBorders(1);
       } else if (whichIconShowed==4) {
           soundState=!soundState;
           if (soundState==true) {
@@ -1293,7 +1699,8 @@ void NastaveniHer() {
       whichIconShowed += abs(y);
     }
     if (whichIconShowed==0) {
-      if (whichMedal==0) {
+      displayOled("Galaxian");
+      if (whichMedal==0 and (x!=0 or y!=0)) {
         ShowBorders(0); 
       }
       if (x==-1) {
@@ -1301,7 +1708,7 @@ void NastaveniHer() {
       } else if (x==1) {
         whichMedal = 0;
         ShowBorders(0);
-        displayOled();
+        //displayOled();
       }
       if (whichMedal==3) {
         whichMedal += abs(y) * -1;
@@ -1310,11 +1717,11 @@ void NastaveniHer() {
       }
       if (whichMedal==3) {
         ShowBorders(3);
-        displayOled("Score: " + String(EEPROM.read(addressGalaxian1)));
+        displayOled("First\nScore: " + String(read2EEPROM(addressGalaxian1)));
         
       } else if (whichMedal==2) {
         ShowBorders(2);
-        displayOled("Score: " + String(EEPROM.read(addressGalaxian2)));
+        displayOled("Second\nScore: " + String(read2EEPROM(addressGalaxian2)));
       }
       /*
       for (int row = 0; row < 8; row++) {
@@ -1327,7 +1734,8 @@ void NastaveniHer() {
       }
       */
     } else if (whichIconShowed==1) {
-      if (whichMedal==0) {
+      displayOled("Snake");
+      if (whichMedal==0 and (x!=0 or y!=0)) {
         ShowBorders(1);
       }
       if (x==-1) {
@@ -1335,7 +1743,7 @@ void NastaveniHer() {
       } else if (x==1) {
         whichMedal = 0;
         ShowBorders(1);
-        displayOled();
+        //displayOled();
       }
       if (whichMedal==3) {
         whichMedal += abs(y) * -1;
@@ -1344,14 +1752,16 @@ void NastaveniHer() {
       }
       if (whichMedal==3) {
         ShowBorders(3);
-        displayOled("Score: " + String(EEPROM.read(addressSnake1)));
+        displayOled("First\nScore: " + String(read2EEPROM(addressSnake1)));
         
       } else if (whichMedal==2) {
         ShowBorders(2);
-        displayOled("Score: " + String(EEPROM.read(addressSnake2)));
+        displayOled("Second\nScore: " + String(read2EEPROM(addressSnake2)));
       }
     }
-    IsButtonPressed();
+    x=0;
+    y=0;
+    //IsButtonPressed();
   }
   delay(10);
 }
@@ -1382,13 +1792,10 @@ void loop() {
   } else if (gameState==6) {
     GalaxianGame();
   }
-  if (soundTime - soundLastTime >= soundDelay) {
+  if (soundTime - soundLastTime >= soundDelay and soundDelay1==0) {
     noTone(soundPin);
     soundLastTime = soundTime;
-    if (soundDelay == 9 and noteCounter==0) {
-      tone (soundPin, 97);
-      soundDelay = 7;
-    } else if (soundDelay == 200 and noteCounter==0) {
+    if (soundDelay == 200 and noteCounter==0) {
         if (congrats > 3) {
           soundDelay=0;
         } else {
@@ -1404,5 +1811,10 @@ void loop() {
     } else {
       soundDelay=0;
     }
+  }
+  if (soundTime - soundLastTime >= soundDelay1 and soundDelay==0) {
+    noTone(soundPin);
+    soundLastTime=soundTime;
+    soundDelay1=0;
   }
 }
