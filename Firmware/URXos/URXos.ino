@@ -35,7 +35,7 @@ LedControl lc = LedControl(11, 12, 10, 4);
 /****************************************************************/
 
 //Food position variables
-String versionUrxOS = "0.7.99";
+String versionUrxOS = "0.8.0";
 int foodX = 0;
 int foodY = 0;
 int foodXSuper = 0;
@@ -380,7 +380,6 @@ void setup() {
   u8g2.begin();
   u8g2.setFlipMode(1);
   //u8x8.refreshDisplay();    // only required for SSD1606/7
-  Serial.begin(9600);
   //Serial.print(EEPROM.read(addressSnake1));
   // Defining all buttons
   //EEPROM.write(addressSnake1,78);
@@ -937,14 +936,31 @@ void GameOver(int score = 0, int game = -1) {
   if (game == 1 or game == 2 or game == 4 or game == -1) {
     //Showing text Game over
     displayImage(GameOverMessage);
+    ActiveButton();
   } else if (game == 3 and score > 30) {
     displayImage(Win);
+    ActiveButton();
   } else {
     displayImage(GameOverMessage);
+    ActiveButton();
   }
   //Snake
   if (game == 1) {
     if (read2EEPROM(addressSnake1) <= score) {
+      active=0;
+      displayImage(Win);
+      displayOled("New highscore\nYour are the best");
+      while (true) {
+        if (soundState==true) {
+          tone(soundPin, NOTE_D6);
+          delay(250);
+          tone(soundPin, NOTE_G6);
+          delay(250);
+        }
+        if (active==1) {
+          break;
+        }
+      }
       write2EEPROM(addressSnake2, read2EEPROM(addressSnake1));
       write2EEPROM(addressSnake1, score);
     } else if (read2EEPROM(addressSnake2) < score) {
@@ -952,13 +968,26 @@ void GameOver(int score = 0, int game = -1) {
     }
   } else if (game == 4) {
     if (read2EEPROM(addressGalaxian1) <= score) {
+      active=0;
+      displayImage(Win);
+      displayOled("New highscore\nYour are the best");
+      while (true) {
+        if (soundState==true) {
+          tone(soundPin, NOTE_D6);
+          delay(250);
+          tone(soundPin, NOTE_G6);
+          delay(250);
+        }
+        if (active==1) {
+          break;
+        }
+      }
       write2EEPROM(addressGalaxian2, read2EEPROM(addressGalaxian1));
       write2EEPROM(addressGalaxian1, score);
     } else if (read2EEPROM(addressGalaxian2) < score) {
       write2EEPROM(addressGalaxian2, score);
     }
   }
-  ActiveButton();
   //Clearing all displays
   displayClear();
   goThrough = true;
@@ -1348,7 +1377,9 @@ void playSong(String nameOfSong) {
     }
 
     // we only play the note for 90% of the duration, leaving 10% as a pause
-    tone(soundPin, pgm_read_word_near(melodyGalaxian + noteCounter), noteDuration * 0.9);
+    if (soundState==true) {
+      tone(soundPin, pgm_read_word_near(melodyGalaxian + noteCounter), noteDuration * 0.9);
+    }
     noteCounter += 2;
     // Wait for the specief duration before playing the next note.
     soundDelay1 = noteDuration;
@@ -1378,7 +1409,9 @@ void playSong(String nameOfSong) {
     }
 
     // we only play the note for 90% of the duration, leaving 10% as a pause
-    tone(soundPin, pgm_read_word_near(melodyCat + noteCounter), noteDuration * 0.9);
+    if (soundState==true) {
+      tone(soundPin, pgm_read_word_near(melodyCat + noteCounter), noteDuration * 0.9);
+    }
     noteCounter += 2;
     // Wait for the specief duration before playing the next note.
     soundDelay1 = noteDuration;
@@ -1410,7 +1443,9 @@ void playSong(String nameOfSong) {
     }
 
     // we only play the note for 90% of the duration, leaving 10% as a pause
-    tone(soundPin, pgm_read_word_near(melodyDoom + noteCounter), noteDuration * 0.9);
+    if (soundState==true) {
+      tone(soundPin, pgm_read_word_near(melodyDoom + noteCounter), noteDuration * 0.9);
+    }
     noteCounter += 2;
     // Wait for the specief duration before playing the next note.
     soundDelay1 = noteDuration;
