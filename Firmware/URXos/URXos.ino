@@ -1,53 +1,73 @@
-//(Snad posledni verze) Po druhym vyhorenim jsme se rozhodl udelat algoritmus smesi for cyklu(verze jedna) a smerem zapinani a zapinani(verze dva) JDU NA TO
-//OLED displey https://s.click.aliexpress.com/e/_APw28Y
 #include <Urx.h>
-//#include <EEPROM.h>
-//#include <U8g2lib.h>
-//#include <Wire.h>
 U8G2_SH1106_128X32_VISIONOX_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 LedControl lc = LedControl(11, 12, 10, 4);
 /*Structure
-  SETUP FAZE -------------------
+  SETUP FAZE --------------------------------------------------------------------------- 
   void Setup() - Runs on starting sketch
-  INPUT FAZE -------------------
-  void Button() - Function is for getting inputs from buttons
-  GAME FAZE --------------------
+  
+  INPUT FAZE ---------------------------------------------------------------------------
+  void blink() - Function for getting inputs from buttons
+  void IsButtonPressed() - Function for stopping Urx until someone press any button
+  void ActiveButton() - Function for stopping Urx until someone press A button
+  
+  HELPING FAZE ------------------------------------------------------------------------- 
+  Displaying Part ---------
+  void ShowBorders(int display) - Function for showing borders on one display
+  void displayImage(const word* image, int displaySizeX = 8, int displaySizeY = 0, int display = 0, int offsetX = 0, int offsetY = 0) - Function for displaying images on display
+  void displayLed(int row, int col, int state) - Function for turning led on exact X and Y cordinations
+  void displayOled(String writing = "") - Function for displaying text on OLED display 
+  void displayClear() - Function for clearing big display
+  
+  Snake Part ---------
+  void GenerateFood() - Snake function for generating food
+  void SettingGameSnake() - Setting starting conditions for Snake like length and speed of snake
+  void Warp() - Take care for warping through walls
+  
+  Galaxian Part ---------
+  void ShootG(int canon) - Function for shooting in Galaxian
+  void EnemyG(int passage) - Function for spawning enemys in Galaxian
+  void SettingGameGalaxian() - Function for setting Galaxian
+  
+  DanceMan Part ---------
+  void SettingGameDanceMan() - Setting starting conditions for DanceMan like speed song etc.
+  
+  Generic Part ---------
+  void PlaySound(int sound, int i = 0) - Function for playing sound
+  void write2EEPROM(int address, int number) - Function for writing 2byte int to EEPROM
+  int read2EEPROM(int address) - Function for reading EEPROM from 2byte space
+  void DrawMenu() - Function for drawing app menu
+  void SettingSetting() - Function for setting setting
+  
+  GAME FAZE ----------------------------------------------------------------------------
   void Menu() - Function that takes care of menu
   void GameOver() - Function for managing gamestate gameover
   void SnakeMenu() - Function that takes care for snake menu that has settings
   void Snake() - Main function for game Snake
-  HELPING FAZE -----------------
-  void SettingGameSnake() - Setting starting conditions like length and speed of snake
-  void Warp() - Take care for warping through walls
-  void TurningLedArray() - Function for turning leds in game on/off
-  void ShowText() - Function for turning text on/off
-  void ShowOneDisplay() - Function for managing one display
-  void ShowBorders() - Function for showing borders on one display
-  void GenerateFood() - Function for setting random food position
-  int IsButtonPressed() - Function for stoping the game untile some button is pressed and then return number corresponding to the direction
-  void PlaySound() - Function for playing chosen sound
-  LOOP FAZE --------------------
-  void Loop() - Runs every 1/100s or every 10 ms
+  
+  LOOP FAZE ----------------------------------------------------------------------------
+  void Loop() - Runs forever
 */
 
 /****************************************************************/
 //Snake
 /****************************************************************/
 
-//Food position variables
+//Version
 String versionUrxOS = "0.8.0";
+//Food position
 int foodX = 0;
 int foodY = 0;
+//Super food position
 int foodXSuper = 0;
 int foodYSuper = 0;
 //Delay in game is overrided when function SettingGameSnake is called
 float delayTime = 300;
-//GameState for setting menu - 0, gameover - 1, game - Snake - 2, game - Space Invators = 3, info - 4, nothing - 5
+//GameState for setting menu - 0, gameover - 1, game - snake - 2, game - danceMan = 3, intensity - 4, difficulty - 41, settings - 5, galaxian - 6
 int gameState = 0;
-//Menu variable
+//Variables that is used in showing borders to apps
 int whichIconShowed = 0;
 int whichMedal = 0;
-//Variables for managing to turning game at specific time
+//Time variables
 unsigned long allTime = 0;
 unsigned long lastTime = 0;
 unsigned long lastTime2 = 0;
@@ -70,9 +90,10 @@ const int battery = A0;
 //Constant variables that are use when SettingGameSnake is called
 const int delayTimeConst = 230;
 const int bodyLengthConst = 3;
-//Variable for storing 8 bites
+//Variables for turning one row ON and OFF
 const int allLedTurnOn = 0b11111111;
 const int allLedTurnOff = 0b00000000;
+//EEPROM addresses
 const int addressSound = 1;
 const int addressIntensity = 2;
 const int addressDifficulty = 3;
@@ -84,30 +105,43 @@ const int addressGalaxian2 = 10;
 volatile int x = 0;
 volatile int y = 0;
 volatile int active = 0;
-//volatile bool change = false;
+//Helping movement variables
 int shiftedX = 7;
 int shiftedY = 7;
 volatile int allwaysX = 0;
 volatile int allwaysY = 0;
 //Variable for length of snake
 int bodyLength = 3;
-//int opravaPohybu = 0;
-//int opravaPohybuf = 0;
-int activatorV = 0;
+//Timer variable
 int timer = 0;
+//Variable for moving enemy
 int moveEnemy1 = 0;
+//Variable for wave system
 int wave = 0;
+//Variable to set modes
 int mode = 0;
+//Variable that is used to count what note to play
 int noteCounter = 0;
+//Variable use to store points
 int points = 6;
-int prucho = 0;
+//Variable is for every use. If you need to have some helping variable then this is it.
+int helpingVariable = 0;
+//Variable for setting difficulty
 int difficulty = 0;
+//Variable for setting intensity
 int intensity = 0;
+//Variables for turning congrats song
 byte congrats = 0;
 bool congratsState = true;
+//Variable for knowing if game is ON
+bool isGameOn = 0;
+//Variable that is used in sound making
 bool soundState = true;
+//Variable to turn on
 bool menuFirstWalkThrough = true;
+//Variable to draw apps
 bool goThrough = true;
+//Variable to know if you need to show staring led
 bool startingLedOn = true;
 bool load = true;
 bool lastState = true;
@@ -441,6 +475,26 @@ void blink() { //Function for all buttons it is called with interupts so that me
     lastDebounceTime = millis();
   }
 }
+
+void IsButtonPressed() {
+  x = 0;
+  y = 0;
+  active = 0;
+  while (true) {
+    if (x != 0 or y != 0 or active != 0) {
+      break;
+    }
+  }
+}
+
+void ActiveButton() {
+  active = 0;
+  while (true) {
+    if (active == 1) {
+      break;
+    }
+  }
+}
 /****************************************************************/
 //Helping functions
 /****************************************************************/
@@ -507,6 +561,9 @@ void displayClear() {
     lc.clearDisplay(index);
   }
 }
+/****************************************************************/
+//Snake functions
+/****************************************************************/
 void GenerateFood() {
   if (abs(mode) != mode and wave != -2) {
     for (int row = 0; row < 16; row++) {
@@ -528,6 +585,49 @@ void GenerateFood() {
     }
   }
 }
+
+void SettingGameSnake() {
+  allTime = millis();
+  lastTime = allTime;
+  delayTime = delayTimeConst - difficulty;
+  bodyLength = bodyLengthConst;
+  isGameOn = 0;
+  startingLedOn = true;
+  congrats = 0;
+  shiftedX = 0;
+  shiftedY = 15;
+  mode = 1;
+  wave = random(1, 5);
+  points = 0;
+  delay(100);
+  x = 0;
+  y = 0;
+  allwaysX = 0;
+  allwaysY = 0;
+  foodYSuper = -1;
+  foodXSuper = -1;
+  active = 0;
+  for (int row = 0; row < 16; row++) {
+    for (int col = 0; col < 16; col++) {
+      Array[row][col] = 0;
+    }
+  }
+  displayClear();
+  //displayOled("Your Score: " + String(bodyLength-3) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
+  displayOled("Snake CLASSIC\nFor start press A");
+}
+
+//Making snake go through walls
+void Warp() {
+  shiftedX < 0 ? shiftedX += 16 : 0;
+  shiftedX > 15 ? shiftedX -= 16 : 0;
+  shiftedY < 0 ? shiftedY += 16 : 0;
+  shiftedY > 15 ? shiftedY -= 16 : 0;
+}
+
+/****************************************************************/
+//Galaxian functions
+/****************************************************************/
 void ShootG(int canon) {
   for (int col = 0; col < 16; col++) {
     if (Array[canon][col] == 0) {
@@ -535,7 +635,7 @@ void ShootG(int canon) {
     }
   }
 }
-int EnemyG(int pruchod) {
+int EnemyG(int passage) {
   int randomR = 0; // How many enemys - maximum
   int randomR2 = 0; // How many enemys - between randomR and 1
   int randomR3 = 0; // How many enemys in one line
@@ -545,13 +645,13 @@ int EnemyG(int pruchod) {
   } else if (difficultyCounter == 60) {
     difficultyCounter = 2;
   }
-  if (pruchod <= 5) {
+  if (passage <= 5) {
     randomR = 4 + difficultyCounter;
     randomR3 = 2;
-  } else if (pruchod <= 10 and pruchod > 5) {
+  } else if (passage <= 10 and passage > 5) {
     randomR = 7 + difficultyCounter;
     randomR3 = 3;
-  } else if (pruchod >= 10) {
+  } else if (passage >= 10) {
     randomR = 8 + difficultyCounter;
     randomR3 = 3;
   }
@@ -577,39 +677,66 @@ int EnemyG(int pruchod) {
       EnemyPosRepetition[i / 2] = EnemysG[i];
       EnemysG[i + 1] = 15;
       EnemyDouble[i] = random(1, randomR3 + 1);
-      /*
-        Serial.print("Hlava y: ");
-        Serial.print(EnemysG[i]);
-        Serial.print(" I-y: ");
-        Serial.println(i);
-        Serial.print("Hlava x: ");
-        Serial.print(EnemysG[i+1]);
-        Serial.print(" I-x: ");
-        Serial.println(i+1);
-      */
-
     }
   }
   return randomR2;
 }
-void IsButtonPressed() {
-  x = 0;
-  y = 0;
-  active = 0;
-  while (true) {
-    if (x != 0 or y != 0 or active != 0) {
-      break;
+
+void SettingGameGalaxian() {
+  displayClear();
+  allTime = millis();
+  lastTime = allTime;
+  lastTime2 = allTime;
+  shiftedY = 13;
+  delayTime = 750 - difficulty;
+  moveEnemy1 = 0;
+  noteCounter = 0;
+  wave = 0;
+  mode = 1;
+  points = 0;
+  isGameOn = 0;
+  helpingVariable = 0;
+  for (int i = 0; i < 100; i++) {
+    EnemysG[i] = 0;
+    if (i <= 50) {
+      EnemyDouble[i] = 0;
     }
   }
-}
-void ActiveButton() {
-  active = 0;
-  while (true) {
-    if (active == 1) {
-      break;
+  for (int row = 0; row < 16; row++) {
+    for (int col = 0; col < 16; col++) {
+      Array[row][col] = 0;
     }
   }
+  displayOled("Galaxian song\nFor start press A");
 }
+
+/****************************************************************/
+//DanceMan functions
+/****************************************************************/
+void SettingGameDanceMan() {
+  displayClear();
+  points = 0; // How many points
+  //wave=0; // What song to play
+  mode = 1;
+  active = 0;
+  noteCounter = 0; // for playSongDanceMan counting which note to play
+  soundDelay = 0;
+  allwaysX = 0; // Counting time when pressed
+  allwaysY = 0; // Direction variable
+  isGameOn = 0; // Is game on?
+  lastTime = millis();
+  if (helpingVariable != -2) {
+    displayImage(ArrowUp);
+    displayOled("Song: Among us\nFor start press A");
+  } else if (helpingVariable == -2) {
+    displayImage(ArrowDown);
+    displayOled("Song: Uno\nFor start press A");
+  }
+  helpingVariable = 0; // When the arrow will apear
+}
+/****************************************************************/
+//Generic functions
+/****************************************************************/
 void PlaySound(int sound, int i = 0) {
   if (soundState == true and abs(mode) != mode) {
     if (sound == 1) {
@@ -673,95 +800,10 @@ void SettingSetting() {
   displayImage(Intensity, 4, 4, 2, -2, -2);
   displayImage(HighScore, 4, 4, 0, -2, -2);
   displayImage(DancemanMenu, 4, 4, 1, -2, -2);
-  activatorV = 0;
+  isGameOn = 0;
   active = 0;
   whichIconShowed = 2;
   ShowBorders(1);
-}
-void SettingGameSnake() {
-  allTime = millis();
-  lastTime = allTime;
-  delayTime = delayTimeConst - difficulty;
-  bodyLength = bodyLengthConst;
-  activatorV = 0;
-  startingLedOn = true;
-  congrats = 0;
-  shiftedX = 0;
-  shiftedY = 15;
-  mode = 1;
-  wave = random(1, 5);
-  points = 0;
-  delay(100);
-  x = 0;
-  y = 0;
-  allwaysX = 0;
-  allwaysY = 0;
-  foodYSuper = -1;
-  foodXSuper = -1;
-  active = 0;
-  for (int row = 0; row < 16; row++) {
-    for (int col = 0; col < 16; col++) {
-      Array[row][col] = 0;
-    }
-  }
-  displayClear();
-  //displayOled("Your Score: " + String(bodyLength-3) + "\nHigh Score: " + String(EEPROM.read(addressSnake1)));
-  displayOled("Snake CLASSIC\nFor start press A");
-}
-void SettingGameGalaxian() {
-  displayClear();
-  allTime = millis();
-  lastTime = allTime;
-  lastTime2 = allTime;
-  shiftedY = 13;
-  delayTime = 750 - difficulty;
-  moveEnemy1 = 0;
-  noteCounter = 0;
-  wave = 0;
-  mode = 1;
-  points = 0;
-  activatorV = 0;
-  prucho = 0;
-  for (int i = 0; i < 100; i++) {
-    EnemysG[i] = 0;
-    if (i <= 50) {
-      EnemyDouble[i] = 0;
-    }
-  }
-  for (int row = 0; row < 16; row++) {
-    for (int col = 0; col < 16; col++) {
-      Array[row][col] = 0;
-    }
-  }
-  displayOled("Galaxian song\nFor start press A");
-}
-void SettingGameDanceMan() {
-  displayClear();
-  points = 0; // How many points
-  //wave=0; // What song to play
-  mode = 1;
-  active = 0;
-  noteCounter = 0; // for playSongDanceMan counting which note to play
-  soundDelay = 0;
-  allwaysX = 0; // Counting time when pressed
-  allwaysY = 0; // Direction variable
-  activatorV = 0; // Is game on?
-  lastTime = millis();
-  if (prucho != -2) {
-    displayImage(ArrowUp);
-    displayOled("Song: Among us\nFor start press A");
-  } else if (prucho == -2) {
-    displayImage(ArrowDown);
-    displayOled("Song: Uno\nFor start press A");
-  }
-  prucho = 0; // When the arrow will apear
-}
-//Making snake go through walls
-void Warp() {
-  shiftedX < 0 ? shiftedX += 16 : 0;
-  shiftedX > 15 ? shiftedX -= 16 : 0;
-  shiftedY < 0 ? shiftedY += 16 : 0;
-  shiftedY > 15 ? shiftedY -= 16 : 0;
 }
 /****************************************************************/
 //Gamestate functions
@@ -1030,13 +1072,13 @@ void Snake() {
     startingLedOn = false;
   }
   //Turning Snake ON
-  if (activatorV == 1 and (x != 0 or y != 0)) {
-    activatorV = 0;
+  if (isGameOn == 1 and (x != 0 or y != 0)) {
+    isGameOn = 0;
     lastTime = allTime;
   }
   if (active == -1) {
     goThrough = true;
-    activatorV = 1;
+    isGameOn = 1;
     active = 0;
     allwaysX = 0;
     allwaysY = 0;
@@ -1045,8 +1087,8 @@ void Snake() {
     displayOled("Your Score: " + String(bodyLength - 3 + points) + "\nHigh Score: " + String(read2EEPROM(addressSnake1)));
     GameOver(bodyLength - 3 + points, 1);
   }
-  if (activatorV == 0 and active == 1 and startingLedOn == false) {
-    activatorV = 1;
+  if (isGameOn == 0 and active == 1 and startingLedOn == false) {
+    isGameOn = 1;
     y = 0;
     x = 0;
     noTone(soundPin);
@@ -1055,7 +1097,7 @@ void Snake() {
     PlaySound(9, congrats);
     congratsState = false;
   }
-  if (activatorV == 0) {
+  if (isGameOn == 0) {
     // Smart blinking food led
     if (mode == 2 or wave == -2 and timer != 0) {
       displayLed(foodYSuper, foodXSuper, millis() % 100 < 50 ? 1 : 0);
@@ -1252,7 +1294,7 @@ void GalaxianGame() {
               displayLed(row, col, 0);
             } else if (Array[row][col] == 1) {
               int displayShip = 0;
-              for (int i = 0; i < prucho * 2; i++) {
+              for (int i = 0; i < helpingVariable * 2; i++) {
                 if (i % 2 == 0) {
                   if (row == EnemysG[i] and col == EnemysG[i + 1]) {
                     displayShip = 1;
@@ -1294,12 +1336,12 @@ void GalaxianGame() {
       }
     }
     if (allTime - lastTime2 >= delayTime) {
-      if (wave >= prucho) {
+      if (wave >= helpingVariable) {
         wave = 0;
         moveEnemy1 += 1;
-        prucho = EnemyG(moveEnemy1);
+        helpingVariable = EnemyG(moveEnemy1);
       }
-      for (int i = 0; i < prucho * 2; i++) {
+      for (int i = 0; i < helpingVariable * 2; i++) {
         if (i % 2 == 0) {
           if (EnemysG[i] != 17 and EnemysG[i + 1] != 17) {
             displayLed(EnemysG[i], EnemysG[i + 1] + 1, 0);
@@ -1467,9 +1509,9 @@ void DanceMan() {
   if (abs(mode) == mode and active == 1) {
     noTone(soundPin);
     int mod = mode;
-    prucho = -mode;
+    helpingVariable = -mode;
     SettingGameDanceMan();
-    prucho = 1;
+    helpingVariable = 1;
     mode = -mod;
     if (mode == -2 ) {
       displayOled("Song: Uno");
@@ -1512,11 +1554,11 @@ void DanceMan() {
   }
   //Serial.println(mode);
   if (abs(mode) != mode) {
-    if (prucho == 1) {
+    if (helpingVariable == 1) {
       allwaysY = random(0, 4);
       const word* nazev[] = {ArrowUp, ArrowRight, ArrowDown, ArrowLeft};
       displayImage(nazev[allwaysY]);
-      prucho = 0;
+      helpingVariable = 0;
       allwaysX = 170;
       x = 0;
       y = 0;
@@ -1553,7 +1595,7 @@ void DanceMan() {
         x = 0;
         y = 0;
         allwaysX = 0;
-        prucho = 1;
+        helpingVariable = 1;
         //delay(100);
       }
     }
@@ -1663,7 +1705,7 @@ void InfoFun(bool mode) {
 }
 
 void NastaveniHer() {
-  if (activatorV == 0) {
+  if (isGameOn == 0) {
     if (soundState == true) {
       displayImage(Sound_on, 6, 6, 3, -1, -1);
     } else if (soundState == false) {
@@ -1715,7 +1757,7 @@ void NastaveniHer() {
       } else if (whichIconShowed == 2) {
         gameState = 41;
       } else if (whichIconShowed == 1) {
-        activatorV = 1;
+        isGameOn = 1;
         whichIconShowed = 1;
         displayImage(SnakeMenu, 4, 4, 1, -2, -2);
         displayImage(Galaxian, 4, 4, 0, -2, -2);
@@ -1731,7 +1773,7 @@ void NastaveniHer() {
         EEPROM.write(addressSound, soundState);
       }
     }
-  } else if (activatorV == 1) {
+  } else if (isGameOn == 1) {
     displayImage(Gold_medal, 4, 4, 3, -2, -2);
     displayImage(Silver_medal, 4, 4, 2, -2, -2);
     if (active == -1) {
