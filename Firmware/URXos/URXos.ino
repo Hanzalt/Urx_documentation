@@ -37,6 +37,7 @@ LedControl lc = LedControl(11, 12, 10, 4);
   int read2EEPROM(int address) - Function for reading EEPROM from 2byte space
   void DrawMenu() - Function for drawing app menu
   void SettingSetting() - Function for setting setting
+  void SleepModeUpdate() - Function for taking care of sleep mode
   
   GAME FAZE ----------------------------------------------------------------------------
   void Menu() - Function that takes care of menu
@@ -53,7 +54,7 @@ LedControl lc = LedControl(11, 12, 10, 4);
 /****************************************************************/
 
 //Version
-String versionUrxOS = "0.8.0";
+const String versionUrxOS = "0.8.1";
 //Food position
 int foodX = 0;
 int foodY = 0;
@@ -145,8 +146,11 @@ bool goThrough = true;
 bool startingLedOn = true;
 bool load = true;
 bool lastState = true;
-const int melodyGalaxian[] PROGMEM = {
+//Variables for sleep mode
+const int long sleepModeActivationDelay = 300000; //in milliseconds
+unsigned long timeOfLastInput = 0;
 
+const int melodyGalaxian[] PROGMEM = {
 
   // Bloody Tears, from Castlevania II
   // Arranged by Bobby Lee. THe flute part was used
@@ -474,6 +478,7 @@ void blink() { //Function for all buttons it is called with interupts so that me
     active = (!digitalRead(a) * 1) | (!digitalRead(b) * -1);
     lastDebounceTime = millis();
   }
+  timeOfLastInput = millis(); //sleep mode timer reset
 }
 
 void IsButtonPressed() {
@@ -1850,6 +1855,27 @@ void NastaveniHer() {
   }
   delay(10);
 }
+
+void SleepModeUpdate() {
+  //function for taking care of sleep mode
+  if(millis() - timeOfLastInput > sleepModeActivationDelay) {
+
+    for (int index = 0; index < 4; index++) {
+      lc.shutdown(index, true);
+    }
+    displayOled("Sleep mode");
+
+    IsButtonPressed();
+
+    for (int index = 0; index < 4; index++) {
+      lc.shutdown(index, false);
+    }
+
+    if(gameState == 0) {DrawMenu();}
+    else if(gameState == 5) {SettingSetting();}
+  }
+}
+
 /****************************************************************/
 //Loop
 /****************************************************************/
@@ -1902,4 +1928,6 @@ void loop() {
     soundLastTime = soundTime;
     soundDelay1 = 0;
   }
+
+  SleepModeUpdate();
 }
