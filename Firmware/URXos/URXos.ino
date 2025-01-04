@@ -54,7 +54,7 @@ LedControl lc = LedControl(11, 12, 10, 4);
 /****************************************************************/
 
 //Version
-const String versionUrxOS = "0.8.1";
+const String versionUrxOS = "0.8.3";
 //Food position
 int foodX = 0;
 int foodY = 0;
@@ -428,12 +428,12 @@ void setup() {
   pinMode(a, INPUT_PULLUP);
   pinMode(b, INPUT_PULLUP);
   // Defining interrupts for all the buttons because we know that arduino nano every has all pins with interupts.
-  attachInterrupt(digitalPinToInterrupt(forward), blink, FALLING);
-  attachInterrupt(digitalPinToInterrupt(right), blink, FALLING);
-  attachInterrupt(digitalPinToInterrupt(left), blink, FALLING);
-  attachInterrupt(digitalPinToInterrupt(down), blink, FALLING);
-  attachInterrupt(digitalPinToInterrupt(a), blink, FALLING);
-  attachInterrupt(digitalPinToInterrupt(b), blink, FALLING);
+  attachInterrupt(digitalPinToInterrupt(forward), blink, RISING);
+  attachInterrupt(digitalPinToInterrupt(right), blink, RISING);
+  attachInterrupt(digitalPinToInterrupt(left), blink, RISING);
+  attachInterrupt(digitalPinToInterrupt(down), blink, RISING);
+  attachInterrupt(digitalPinToInterrupt(a), blink, RISING);
+  attachInterrupt(digitalPinToInterrupt(b), blink, RISING);
   // Pin for piezzo buzzer
   pinMode(soundPin, OUTPUT);
   const int batteryValue = analogRead(battery);
@@ -473,9 +473,9 @@ void setup() {
 /****************************************************************/
 void blink() { //Function for all buttons it is called with interupts so that means that is will go here every time you press button.
   if ((millis() - lastDebounceTime) > debounceDelay) {
-    y = (!digitalRead(forward) * 1) | (!digitalRead(down) * -1);
-    x = (!digitalRead(left) * 1) | (!digitalRead(right) * -1);
-    active = (!digitalRead(a) * 1) | (!digitalRead(b) * -1);
+    y = (digitalRead(forward) * 1) | (digitalRead(down) * -1);
+    x = (digitalRead(left) * 1) | (digitalRead(right) * -1);
+    active = (digitalRead(a) * 1) | (digitalRead(b) * -1);
     lastDebounceTime = millis();
   }
   timeOfLastInput = millis(); //sleep mode timer reset
